@@ -67,12 +67,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: NixOS-Minimal-Systemd-default
-            attr: legacyPackages.aarch64-linux.nixosDroidspacesTarballs.aarch64-linux.minimal
-          - name: NixOS-Minimal-Systemd-v259
-            attr: legacyPackages.aarch64-linux.nixosDroidspacesTarballs.aarch64-linux.minimal-with-systemd-v259
-          - name: NixOS-Finix-Experimental
-            attr: legacyPackages.aarch64-linux.finixDroidspacesTarballs.aarch64-linux.experimental
+          - name: NixOS-Minimal-Kernel-5.10-and-up
+            attr: nixosDroidspacesTarballs.aarch64-linux.minimal
+          - name: NixOS-Minimal-Systemd-v257
+            attr: nixosDroidspacesTarballs.aarch64-linux.minimal-with-systemd-v257
+          - name: NixOS-Minimal-Finix-Experimental
+            attr: finixDroidspacesTarballs.aarch64-linux.experimental
     steps:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v16
