@@ -3,7 +3,7 @@
 ENV_FILE=/run/droidspaces.env
 CONFIG=/run/droidspaces/container.config
 
-# 1. Parse Environment Variables (Cleaned up: No whitelist needed with -p)
+# 1. Parse Environment Variables
 if [ -f "$ENV_FILE" ]; then
     . "$ENV_FILE"
 else
