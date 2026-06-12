@@ -3,24 +3,43 @@
 ENV_FILE=/run/droidspaces.env
 CONFIG=/run/droidspaces/container.config
 
+# 1. Parse Environment Variables (Cleaned up: No whitelist needed with -p)
 if [ -f "$ENV_FILE" ]; then
     . "$ENV_FILE"
-    WHITELIST=$(sed -n 's/^export \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' "$ENV_FILE" | tr '\n' ',' | sed 's/,$//')
 else
     export DISPLAY=:5
-    WHITELIST=DISPLAY
     if grep -q 'enable_pulseaudio=1' "$CONFIG" 2>/dev/null; then
         export PULSE_SERVER=unix:/tmp/.pulse-socket
-        WHITELIST="$WHITELIST,PULSE_SERVER"
     fi
     if grep -q 'enable_virgl=1' "$CONFIG" 2>/dev/null; then
         export GALLIUM_DRIVER=virpipe
-        WHITELIST="$WHITELIST,GALLIUM_DRIVER"
     fi
 fi
 
-if [ -n "$XFCE_USER" ]; then
-    exec su -l -w "$WHITELIST" "$XFCE_USER" -c 'exec /usr/bin/startxfce4'
+# 2. Check User and Launch Desktop
+if [ -n "$XFCE_USER" ] && [ "$XFCE_USER" != "root" ]; then
+    
+    # Grant ownership of sockets AND the X11 lock file to the local user
+    [ -S /tmp/.X11-unix/X5 ] && chown "$XFCE_USER" /tmp/.X11-unix/X5
+    [ -f /tmp/.X5-lock ] && chown "$XFCE_USER" /tmp/.X5-lock
+    [ -S /tmp/.pulse-socket ] && chown "$XFCE_USER" /tmp/.pulse-socket
+    [ -S /tmp/.virgl_test ] && chown "$XFCE_USER" /tmp/.virgl_test
+    
+    # Forcefully re-route environment variables away from /root
+    TARGET_UID=$(id -u "$XFCE_USER")
+    export HOME=$(getent passwd "$XFCE_USER" | cut -d: -f6)
+    export USER="$XFCE_USER"
+    export LOGNAME="$XFCE_USER"
+    export XDG_RUNTIME_DIR="/run/user/$TARGET_UID"
+    
+    # Create a pristine DBus runtime directory for the local user
+    mkdir -p "$XDG_RUNTIME_DIR"
+    chown "$XFCE_USER":"$XFCE_USER" "$XDG_RUNTIME_DIR"
+    chmod 700 "$XDG_RUNTIME_DIR"
+    
+    # Drop privileges, preserve container variables (-p), but start in the user's home
+    exec su -p "$XFCE_USER" -c 'cd "$HOME" && exec /usr/bin/startxfce4'
 else
+    # Fallback to root execution
     exec /usr/bin/startxfce4
 fi
