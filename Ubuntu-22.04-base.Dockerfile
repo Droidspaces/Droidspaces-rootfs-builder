@@ -241,7 +241,7 @@ for unit in NetworkManager.service dhcpcd.service systemd-resolved.service syste
         cat > "/etc/systemd/system/${unit}.d/99-netmode-limit.conf" << 'EOF'
 [Service]
 ExecCondition=
-ExecCondition=/bin/sh -c "grep -q 'net_mode=nat' /run/droidspaces/container.config"
+ExecCondition=/bin/sh -c "grep -qE 'net_mode=(nat|gateway)' /run/droidspaces/container.config"
 EOF
     fi
 done

@@ -117,7 +117,7 @@ depend() {
 
 start_pre() {
 	# Only start in NAT mode - prevents cellular network breakage in host network mode
-	if ! grep -q 'net_mode=nat' /run/droidspaces/container.config 2>/dev/null; then
+	if ! grep -qE 'net_mode=(nat|gateway)' /run/droidspaces/container.config 2>/dev/null; then
 		einfo "Skipping dhcpcd: not in NAT network mode"
 		return 1
 	fi
