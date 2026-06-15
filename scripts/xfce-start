@@ -18,19 +18,33 @@ fi
 
 # 2. Check User and Launch Desktop
 if [ -n "$XFCE_USER" ] && [ "$XFCE_USER" != "root" ]; then
-    
-    # Grant ownership of sockets and the X11 lock file to the local user
+
+    # Grant ownership of sockets and X11 lock file to the target user
     [ -S /tmp/.X11-unix/X5 ] && chown "$XFCE_USER" /tmp/.X11-unix/X5
-    [ -f /tmp/.X5-lock ] && chown "$XFCE_USER" /tmp/.X5-lock
+    [ -f /tmp/.X5-lock ]      && chown "$XFCE_USER" /tmp/.X5-lock
     [ -S /tmp/.pulse-socket ] && chown "$XFCE_USER" /tmp/.pulse-socket
-    [ -S /tmp/.virgl_test ] && chown "$XFCE_USER" /tmp/.virgl_test
-    
-    # Build a dynamic whitelist of the active environment, filtering out root profile paths
-    SAFE_ENV=$(env | awk -F= '{print $1}' | grep -vE '^(HOME|USER|LOGNAME|PWD|SHELL|XDG_RUNTIME_DIR|MAIL)$' | tr '\n' ',' | sed 's/,$//')
-    
-    # Drop privileges using a clean login shell (-l), passing the dynamic safe whitelist (-w)
-    exec su -l -w "$SAFE_ENV" "$XFCE_USER" -c 'exec /usr/bin/startxfce4'
+    [ -S /tmp/.virgl_test ]   && chown "$XFCE_USER" /tmp/.virgl_test
+
+    # Build dynamic env whitelist, excluding root-specific or session-poisoning vars
+    SAFE_ENV=$(env | awk -F= '{print $1}' \
+        | grep -vE '^(HOME|USER|LOGNAME|PWD|SHELL|XDG_RUNTIME_DIR|MAIL|SHLVL|_)$' \
+        | tr '\n' ',' | sed 's/,$//')
+
+    # Drop privileges and launch XFCE under a clean login shell
+    exec su -l -w "$SAFE_ENV" "$XFCE_USER" -c '
+        export XDG_RUNTIME_DIR=/run/user/$(id -u)
+        mkdir -p "$XDG_RUNTIME_DIR"
+        chmod 0700 "$XDG_RUNTIME_DIR"
+        exec /usr/bin/startxfce4'
+
 else
-    # Fallback to standard root execution
+    # Warn and fall back to root execution
+    if [ "$XFCE_USER" = "root" ]; then
+        echo "Warning: XFCE_USER=root, running desktop as root" >&2
+    fi
+
+    export XDG_RUNTIME_DIR=/run/user/0
+    mkdir -p "$XDG_RUNTIME_DIR"
+    chmod 0700 "$XDG_RUNTIME_DIR"
     exec /usr/bin/startxfce4
 fi
