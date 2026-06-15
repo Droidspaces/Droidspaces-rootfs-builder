@@ -3,7 +3,7 @@
 ENV_FILE=/run/droidspaces.env
 CONFIG=/run/droidspaces/container.config
 
-# 1. Parse Environment Variables
+# 1. Parse Initial Environment Variables
 if [ -f "$ENV_FILE" ]; then
     . "$ENV_FILE"
 else
@@ -19,27 +19,18 @@ fi
 # 2. Check User and Launch Desktop
 if [ -n "$XFCE_USER" ] && [ "$XFCE_USER" != "root" ]; then
     
-    # Grant ownership of sockets AND the X11 lock file to the local user
+    # Grant ownership of sockets and the X11 lock file to the local user
     [ -S /tmp/.X11-unix/X5 ] && chown "$XFCE_USER" /tmp/.X11-unix/X5
     [ -f /tmp/.X5-lock ] && chown "$XFCE_USER" /tmp/.X5-lock
     [ -S /tmp/.pulse-socket ] && chown "$XFCE_USER" /tmp/.pulse-socket
     [ -S /tmp/.virgl_test ] && chown "$XFCE_USER" /tmp/.virgl_test
     
-    # Forcefully re-route environment variables away from /root
-    TARGET_UID=$(id -u "$XFCE_USER")
-    export HOME=$(getent passwd "$XFCE_USER" | cut -d: -f6)
-    export USER="$XFCE_USER"
-    export LOGNAME="$XFCE_USER"
-    export XDG_RUNTIME_DIR="/run/user/$TARGET_UID"
+    # Build a dynamic whitelist of the active environment, filtering out root profile paths
+    SAFE_ENV=$(env | awk -F= '{print $1}' | grep -vE '^(HOME|USER|LOGNAME|PWD|SHELL|XDG_RUNTIME_DIR|MAIL)$' | tr '\n' ',' | sed 's/,$//')
     
-    # Create a pristine DBus runtime directory for the local user
-    mkdir -p "$XDG_RUNTIME_DIR"
-    chown "$XFCE_USER":"$XFCE_USER" "$XDG_RUNTIME_DIR"
-    chmod 700 "$XDG_RUNTIME_DIR"
-    
-    # Drop privileges, preserve container variables (-p), but start in the user's home
-    exec su -p "$XFCE_USER" -c 'cd "$HOME" && exec /usr/bin/startxfce4'
+    # Drop privileges using a clean login shell (-l), passing the dynamic safe whitelist (-w)
+    exec su -l -w "$SAFE_ENV" "$XFCE_USER" -c 'exec /usr/bin/startxfce4'
 else
-    # Fallback to root execution
+    # Fallback to standard root execution
     exec /usr/bin/startxfce4
 fi
