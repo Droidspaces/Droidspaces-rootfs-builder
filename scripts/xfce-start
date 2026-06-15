@@ -19,6 +19,15 @@ fi
 # 2. Check User and Launch Desktop
 if [ -n "$XFCE_USER" ] && [ "$XFCE_USER" != "root" ]; then
 
+    # Fetch the target user's numeric UID and prepare XDG runtime dir
+    USER_UID=$(id -u "$XFCE_USER")
+    TARGET_XDG="/run/user/$USER_UID"
+
+    # Unconditionally create/heal the runtime directory and force correct permissions
+    mkdir -p "$TARGET_XDG"
+    chown "$XFCE_USER" "$TARGET_XDG"
+    chmod 700 "$TARGET_XDG"
+
     # Grant ownership of sockets and X11 lock file to the target user
     [ -S /tmp/.X11-unix/X5 ] && chown "$XFCE_USER" /tmp/.X11-unix/X5
     [ -f /tmp/.X5-lock ]      && chown "$XFCE_USER" /tmp/.X5-lock
@@ -32,19 +41,16 @@ if [ -n "$XFCE_USER" ] && [ "$XFCE_USER" != "root" ]; then
 
     # Drop privileges and launch XFCE under a clean login shell
     exec su -l -w "$SAFE_ENV" "$XFCE_USER" -c '
-        export XDG_RUNTIME_DIR=/run/user/$(id -u)
-        mkdir -p "$XDG_RUNTIME_DIR"
-        chmod 0700 "$XDG_RUNTIME_DIR"
+        export XDG_RUNTIME_DIR='"$TARGET_XDG"'
         exec /usr/bin/startxfce4'
-
 else
     # Warn and fall back to root execution
     if [ "$XFCE_USER" = "root" ]; then
         echo "Warning: XFCE_USER=root, running desktop as root" >&2
     fi
 
+    mkdir -p /run/user/0
+    chmod 700 /run/user/0
     export XDG_RUNTIME_DIR=/run/user/0
-    mkdir -p "$XDG_RUNTIME_DIR"
-    chmod 0700 "$XDG_RUNTIME_DIR"
     exec /usr/bin/startxfce4
 fi
