@@ -20,7 +20,7 @@ opkg update
 opkg remove --force-depends \
     firewall4 nftables-json \
     kmod-nft-offload kmod-nft-nat kmod-nft-fib kmod-nft-core || true
-opkg install iptables-zz-legacy ip6tables-zz-legacy firewall
+opkg install iptables-zz-legacy ip6tables-zz-legacy firewall coreutils-base64
 ln -sf /usr/sbin/iptables-legacy  /usr/sbin/iptables
 ln -sf /usr/sbin/ip6tables-legacy /usr/sbin/ip6tables
 
