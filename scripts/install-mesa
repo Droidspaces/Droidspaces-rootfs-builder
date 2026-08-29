@@ -22,9 +22,10 @@ fi
 case "${ID}:${VERSION_CODENAME}" in
     ubuntu:noble)   DISTRO_TAG="ubuntu_noble" ;;
     debian:trixie)  DISTRO_TAG="debian_trixie" ;;
+    kali:*|kali:kali-rolling) DISTRO_TAG="debian_trixie" ;;
     *)
         echo "Error: Unsupported OS: ${PRETTY_NAME:-${ID}}"
-        echo "Only Ubuntu 24.04 (noble) and Debian 13 (trixie) are supported."
+        echo "Only Ubuntu 24.04 (noble), Debian 13 (trixie), and Kali Linux (rolling) are supported."
         exit 1
         ;;
 esac

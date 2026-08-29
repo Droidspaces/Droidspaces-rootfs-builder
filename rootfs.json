@@ -91,6 +91,32 @@
     "author": "Droidspaces developers"
   },
   {
+    "name": "Kali Linux - Minimal",
+    "distro": "Kali",
+    "description": "Minimal Kali Linux rootfs with basic packages.",
+    "architecture": "aarch64",
+    "file": "Kali-Linux-Minimal",
+    "download_url": "",
+    "sha256": "",
+    "size_bytes": 0,
+    "version": "",
+    "build_date": "",
+    "author": "Droidspaces developers"
+  },
+  {
+    "name": "Kali Linux - XFCE",
+    "distro": "Kali",
+    "description": "Kali Linux rootfs with basic packages, development tools, Docker, and XFCE desktop environment.",
+    "architecture": "aarch64",
+    "file": "Kali-Linux-XFCE",
+    "download_url": "",
+    "sha256": "",
+    "size_bytes": 0,
+    "version": "",
+    "build_date": "",
+    "author": "Droidspaces developers"
+  },
+  {
     "name": "Ubuntu 22.04.5 LTS - Minimal",
     "distro": "Ubuntu",
     "description": "Minimal Ubuntu 22.04 rootfs with basic packages..",
