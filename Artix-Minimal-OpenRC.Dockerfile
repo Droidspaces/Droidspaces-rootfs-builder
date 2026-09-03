@@ -24,7 +24,7 @@ FROM base AS customizer
 # for NAT/gateway containers and cannot disturb Android host networking.
 RUN pacman-key --init && \
     pacman-key --populate artix && \
-    pacman --disable-sandbox -Syu --noconfirm && \
+    pacman --disable-sandbox -Syu --noconfirm --ignore linux-aarch64,linux-aarch64-lts,linux-aarch64-headers,linux-aarch64-lts-headers,linux-firmware,linux-firmware-whence,mkinitcpio && \
     pacman --disable-sandbox -S --needed --noconfirm \
         bash \
         dialog \
