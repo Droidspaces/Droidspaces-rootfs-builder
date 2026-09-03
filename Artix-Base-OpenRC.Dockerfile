@@ -4,9 +4,18 @@
 # Uses Armtix (ARM64 Artix) rootfs tarball for Android device compatibility.
 # eudev supplies udev, while Artix's *-openrc packages supply service scripts.
 
-# Bootstrap from Armtix rootfs tarball (ARM64 only)
+# Download and prepare the Armtix rootfs
+FROM alpine:latest AS bootstrap
+RUN apk add --no-cache curl xz
+WORKDIR /rootfs
+RUN curl -fsSL https://armtixlinux.org/images/armtix-openrc-20260124.tar.xz | xz -d | tar x && \
+    ln -sf usr/bin bin && \
+    ln -sf usr/lib lib && \
+    ln -sf usr/lib64 lib64 2>/dev/null || true && \
+    ln -sf usr/sbin sbin
+
 FROM scratch AS base
-ADD https://armtixlinux.org/images/armtix-openrc-20260124.tar.xz /
+COPY --from=bootstrap /rootfs /
 
 FROM base AS customizer
 
