@@ -40,8 +40,6 @@ RUN pacman-key --init && \
         ca-certificates \
         bash-completion \
         openrc \
-        eudev \
-        eudev-openrc \
         dbus \
         dbus-openrc \
         git \
