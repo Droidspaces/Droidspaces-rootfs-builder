@@ -24,8 +24,8 @@ FROM base AS customizer
 # for NAT/gateway containers and cannot disturb Android host networking.
 RUN pacman-key --init && \
     pacman-key --populate artix && \
-    pacman -Syu --noconfirm && \
-    pacman -S --needed --noconfirm \
+    pacman --disable-sandbox -Syu --noconfirm && \
+    pacman --disable-sandbox -S --needed --noconfirm \
         bash \
         dialog \
         coreutils \
@@ -77,7 +77,7 @@ RUN pacman-key --init && \
         docker \
         docker-openrc \
         docker-compose && \
-    pacman -Scc --noconfirm
+    pacman --disable-sandbox -Scc --noconfirm
 
 # Copy shell aliases into the rootfs.
 COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
@@ -222,7 +222,7 @@ printf 'Post-extraction OpenRC fixes applied on %s\n' "$(date)" > /etc/droidspac
 EOF_RUN
 
 # Final package-cache cleanup.
-RUN pacman -Scc --noconfirm && rm -rf /var/cache/pacman/pkg/*
+RUN pacman --disable-sandbox -Scc --noconfirm && rm -rf /var/cache/pacman/pkg/*
 
 # Export a plain rootfs for DroidSpaces extraction.
 FROM scratch AS export
