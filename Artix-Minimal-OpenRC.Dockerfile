@@ -23,7 +23,7 @@ FROM base AS customizer
 # NetworkManager is enabled through a DroidSpaces wrapper below so it only runs
 # for NAT/gateway containers and cannot disturb Android host networking.
 RUN pacman-key --init && \
-    pacman --disable-sandbox -Rdd --noconfirm linux-aarch64 linux-aarch64-lts linux-aarch64-headers linux-aarch64-lts-headers mkinitcpio mkinitcpio-busybox 2>/dev/null || true && \
+    pacman --disable-sandbox -Rdd --noconfirm linux-aarch64 linux-aarch64-lts linux-aarch64-headers linux-aarch64-lts-headers mkinitcpio mkinitcpio-busybox linux-firmware linux-firmware-whence linux-firmware-amdgpu linux-firmware-atheros linux-firmware-broadcom linux-firmware-cirrus linux-firmware-intel linux-firmware-mediatek linux-firmware-nvidia linux-firmware-other linux-firmware-radeon linux-firmware-realtek 2>/dev/null || true && \
     pacman-key --populate artix && \
     pacman --disable-sandbox -Syu --noconfirm --ignore linux-aarch64,linux-aarch64-lts,linux-aarch64-headers,linux-aarch64-lts-headers,linux-firmware,linux-firmware-whence,mkinitcpio && \
     pacman --disable-sandbox -S --needed --noconfirm \
@@ -75,7 +75,9 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     printf '%s\n' 'LANG=en_US.UTF-8' > /etc/locale.conf && \
     install -d -m 0755 /run/sshd && \
     sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
-    sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    echo "DisableSandbox" >> /etc/pacman.conf && \
+    userdel -r armtix 2>/dev/null || true
 
 # NetworkManager DHCP profile for eth* interfaces used by DroidSpaces.
 RUN install -d -m 0700 /etc/NetworkManager/system-connections && \
