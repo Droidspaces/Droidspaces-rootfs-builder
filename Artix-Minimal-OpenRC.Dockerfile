@@ -1,14 +1,20 @@
+# syntax=docker/dockerfile:1.6
 # Dockerfile (Artix Linux Minimal, OpenRC)
 #
-# This image intentionally uses Artix's OpenRC base instead of Arch/systemd.
+# Uses Armtix (ARM64 Artix) rootfs tarball for Android device compatibility.
 # eudev supplies udev, while Artix's *-openrc packages supply service scripts.
-ARG TARGETPLATFORM
-FROM artixlinux/artixlinux:base-openrc AS customizer
 
-# Refresh the Artix keyring first, then install the minimal development rootfs.
+# Bootstrap from Armtix rootfs tarball (ARM64 only)
+FROM scratch AS base
+ADD https://armtixlinux.org/images/armtix-openrc-20260124.tar.xz /
+
+FROM base AS customizer
+
+# Initialize pacman keyring and install the minimal rootfs packages.
 # NetworkManager is enabled through a DroidSpaces wrapper below so it only runs
 # for NAT/gateway containers and cannot disturb Android host networking.
-RUN pacman -Sy --noconfirm artix-keyring && \
+RUN pacman-key --init && \
+    pacman-key --populate artix && \
     pacman -Syu --noconfirm && \
     pacman -S --needed --noconfirm \
         bash \
@@ -63,8 +69,7 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
-# NetworkManager DHCP profile replacing systemd-networkd's .network file.
-# The wildcard match covers the conventional eth* interfaces DroidSpaces uses.
+# NetworkManager DHCP profile for eth* interfaces used by DroidSpaces.
 RUN install -d -m 0700 /etc/NetworkManager/system-connections && \
     cat > /etc/NetworkManager/system-connections/droidspaces-ethernet.nmconnection <<'EOF'
 [connection]
@@ -101,15 +106,13 @@ if grep -q '^_apt:' /etc/passwd; then
     usermod -g aid_inet _apt
 fi
 
-# Replace systemd-udev-trigger overrides with a restricted OpenRC coldplug
-# service. It only triggers subsystems useful inside DroidSpaces, avoiding a
-# full coldplug of Android-owned hardware.
+# Restricted OpenRC coldplug service for container-safe udev triggers.
 cat > /etc/init.d/droidspaces-udev-trigger <<'EOT'
 #!/sbin/openrc-run
 
 description="Restricted eudev coldplug for DroidSpaces"
 
- depend() {
+depend() {
     need udev
     before localmount
     keyword -lxc -vserver
@@ -134,15 +137,13 @@ start() {
 EOT
 chmod 0755 /etc/init.d/droidspaces-udev-trigger
 
-# Start NetworkManager only for DroidSpaces NAT/gateway networking. In host
-# mode this service succeeds without touching Android's cellular networking.
+# Conditional NetworkManager startup for NAT/gateway mode only.
 cat > /etc/init.d/droidspaces-network <<'EOT'
 #!/sbin/openrc-run
 
 description="Conditional DroidSpaces NetworkManager startup"
-provide net
 
- depend() {
+depend() {
     need dbus
     after udev droidspaces-udev-trigger
 }
@@ -173,19 +174,15 @@ stop() {
 EOT
 chmod 0755 /etc/init.d/droidspaces-network
 
-# OpenRC service enablement replaces all systemd target symlinks. eudev-openrc
-# enables its unrestricted udev-trigger by default, so remove that coldplug
-# service and substitute the Android-safe trigger above. Do not add
-# NetworkManager directly; the conditional wrapper owns its startup.
+# OpenRC service enablement.
 rc-update add udev sysinit
-rc-update del udev-trigger sysinit || true
+rc-update del udev-trigger sysinit 2>/dev/null || true
 rc-update add droidspaces-udev-trigger sysinit
 rc-update add dbus default
 rc-update add droidspaces-network default
 rc-update add sshd default
 
-# Keep logs bounded on storage-constrained Android devices. Artix does not use
-# journald here, so there are no journald or logind overrides to install.
+# Keep logs bounded on storage-constrained Android devices.
 if [ -f /etc/logrotate.conf ]; then
     sed -i 's/^#maxsize.*/maxsize 50M/' /etc/logrotate.conf
     grep -q '^maxsize 50M$' /etc/logrotate.conf || echo 'maxsize 50M' >> /etc/logrotate.conf
