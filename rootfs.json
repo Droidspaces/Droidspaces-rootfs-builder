@@ -52,6 +52,32 @@
     "author": "Droidspaces developers"
   },
   {
+    "name": "Artix Linux - Minimal",
+    "distro": "Artix",
+    "description": "Artix Linux rootfs with basic packages(Uses OpenRC).",
+    "architecture": "aarch64",
+    "file": "Artix-Minimal-OpenRC",
+    "download_url": "https://github.com/diverselightchara/Droidspaces-rootfs-builder/releases/download/v20260903-064222/Artix-Minimal-OpenRC-Droidspaces-rootfs-aarch64-20260903-v20260903-064222.tar.xz",
+    "sha256": "dcdcb31bab459566cb36f047aa65539c7318133258d0317847ce52f95d7db543",
+    "size_bytes": 160995400,
+    "version": "v20260903-064222",
+    "build_date": "20260903",
+    "author": "Droidspaces developers"
+  },
+  {
+    "name": "Artix Linux - Base",
+    "distro": "Artix",
+    "description": "Artix Linux rootfs with basic packages, development tools and Docker (Uses OpenRC).",
+    "architecture": "aarch64",
+    "file": "Artix-Base-OpenRC",
+    "download_url": "https://github.com/diverselightchara/Droidspaces-rootfs-builder/releases/download/v20260903-064222/Artix-Base-OpenRC-Droidspaces-rootfs-aarch64-20260903-v20260903-064222.tar.xz",
+    "sha256": "13c0dc08be6e3a9f24d4f7d2bdcc9b6f67c30f833c56495a73a91661235de300",
+    "size_bytes": 440785844,
+    "version": "v20260903-064222",
+    "build_date": "20260903",
+    "author": "Droidspaces developers"
+  },
+  {
     "name": "Debian GNU/Linux 13 (Trixie) - Minimal",
     "distro": "Debian",
     "description": "Minimal Debian 13 rootfs with basic packages.",
