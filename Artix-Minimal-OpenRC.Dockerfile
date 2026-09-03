@@ -70,7 +70,7 @@ RUN ln -sf /usr/bin/iptables-legacy /usr/bin/iptables && \
 
 # Configure locale and SSH. OpenRC's sshd service creates/uses the runtime state
 # when booted, but keep the directory for container runtimes that start it early.
-RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
+RUN sed -i '/en_US.UTF-8/s/^#\s\?//' /etc/locale.gen && \
     locale-gen && \
     printf '%s\n' 'LANG=en_US.UTF-8' > /etc/locale.conf && \
     install -d -m 0755 /run/sshd && \
