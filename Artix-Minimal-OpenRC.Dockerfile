@@ -76,7 +76,7 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     install -d -m 0755 /run/sshd && \
     sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    echo "DisableSandbox" >> /etc/pacman.conf && \
+    sed -i "/^\[options\]/a DisableSandbox" /etc/pacman.conf && \
     userdel -r armtix 2>/dev/null || true
 
 # NetworkManager DHCP profile for eth* interfaces used by DroidSpaces.
