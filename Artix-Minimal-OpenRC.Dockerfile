@@ -23,6 +23,7 @@ FROM base AS customizer
 # NetworkManager is enabled through a DroidSpaces wrapper below so it only runs
 # for NAT/gateway containers and cannot disturb Android host networking.
 RUN pacman-key --init && \
+    pacman --disable-sandbox -Rdd --noconfirm linux-aarch64 linux-aarch64-lts linux-aarch64-headers linux-aarch64-lts-headers mkinitcpio mkinitcpio-busybox 2>/dev/null || true && \
     pacman-key --populate artix && \
     pacman --disable-sandbox -Syu --noconfirm --ignore linux-aarch64,linux-aarch64-lts,linux-aarch64-headers,linux-aarch64-lts-headers,linux-firmware,linux-firmware-whence,mkinitcpio && \
     pacman --disable-sandbox -S --needed --noconfirm \
