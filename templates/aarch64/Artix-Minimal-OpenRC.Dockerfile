@@ -230,6 +230,10 @@ start() {
 EOT
 chmod 0755 /etc/init.d/droidspaces-devfix
 
+# /proc/sys is read-only in Droidspaces containers and Artix's sysctl.d defaults
+# are meaningless on an Android kernel; drop the service so it stops erroring at boot.
+rc-update del sysctl boot
+
 # OpenRC service enablement.
 rc-update add droidspaces-devfix sysinit
 rc-update add udev sysinit
