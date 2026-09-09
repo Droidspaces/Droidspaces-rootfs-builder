@@ -2,182 +2,127 @@ name: Build and Release Droidspaces RootFS
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
     inputs:
       update_json_only:
-        description: 'Only update rootfs.json (skip build & release)'
+        description: 'Only regenerate rootfs.json from the latest release (skip build & release)'
         type: boolean
         default: false
   schedule:
     - cron: '0 0 * * 0'
+
+concurrency:
+  group: rootfs-release
+  cancel-in-progress: false
 
 jobs:
   setup:
     if: ${{ github.event.inputs.update_json_only != 'true' }}
     runs-on: ubuntu-latest
     outputs:
-      templates: ${{ steps.find-templates.outputs.templates }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
       build_id: ${{ steps.prep.outputs.build_id }}
       build_date: ${{ steps.prep.outputs.build_date }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Find Build Templates
-        id: find-templates
+      - name: Lint template labels
+        run: python3 scripts/generate_rootfs_json.py --lint
+
+      - name: Build matrix from templates/<arch>/*.Dockerfile
+        id: matrix
         run: |
-          # Find all *.Dockerfile files, extract names, and format as JSON array
-          TEMPLATES=$(ls *.Dockerfile | sed 's/\.Dockerfile//' | jq -R -s -c 'split("\n")[:-1]')
-          echo "templates=$TEMPLATES" >> $GITHUB_OUTPUT
-          echo "Detected templates: $TEMPLATES"
+          MATRIX=$(find templates -mindepth 2 -name '*.Dockerfile' -printf '%P\n' | sort \
+            | jq -R -s -c --slurpfile archs archs.json '
+                split("\n")[:-1]
+                | map(capture("^(?<arch>[^/]+)/(?<name>.+)\\.Dockerfile$"))
+                | map(. + $archs[0][.arch])
+                | {include: .}')
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "$MATRIX" | jq .
 
-      - name: Prepare Build Metadata
+      - name: Prepare build metadata
         id: prep
         run: |
-          BUILD_DATE=$(date +'%Y-%m-%d %H:%M:%S')
-          BUILD_ID="v$(date +'%Y%m%d-%H%M%S')"
-          echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_OUTPUT
-          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_OUTPUT
-          echo "Build ID: $BUILD_ID"
+          echo "build_date=$(date +'%Y-%m-%d %H:%M:%S')" >> "$GITHUB_OUTPUT"
+          echo "build_id=v$(date +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
 
   build:
-    if: ${{ github.event.inputs.update_json_only != 'true' }}
     needs: setup
-    runs-on: ubuntu-24.04-arm
+    name: ${{ matrix.arch }}/${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
-      matrix:
-        template: ${{ fromJson(needs.setup.outputs.templates) }}
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build RootFS (${{ matrix.template }})
-        run: |
-          chmod +x build_rootfs-native.sh
-          # Native build without QEMU overhead
-          ./build_rootfs-native.sh -i "${{ matrix.template }}.Dockerfile" -v "${{ needs.setup.outputs.build_id }}"
+      - name: Build rootfs
+        run: ./build.sh -a "${{ matrix.arch }}" -i "${{ matrix.name }}" -v "${{ needs.setup.outputs.build_id }}"
 
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.template }}-rootfs
+          name: ${{ matrix.arch }}-${{ matrix.name }}
           path: "*.tar.xz"
           retention-days: 1
-
-  build-nixos:
-    if: ${{ github.event.inputs.update_json_only != 'true' }}
-    needs: setup
-    runs-on: ubuntu-24.04-arm
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: NixOS-Minimal-Systemd-latest-Kernel-5.10-and-up
-            attr: nixosDroidspacesTarballs.aarch64-linux.minimal
-          - name: NixOS-Minimal-Systemd-v257.9
-            attr: nixosDroidspacesTarballs.aarch64-linux.minimal-with-systemd-v257
-          - name: NixOS-Minimal-Finix-Experimental
-            attr: finixDroidspacesTarballs.aarch64-linux.experimental
-    steps:
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v16
-
-      - name: Build ${{ matrix.name }} RootFS
-        run: |
-          nix build github:ravindu644/Droidspaces-OSS#${{ matrix.attr }}
-
-      - name: Package artifact
-        run: |
-          DATE=$(date +%Y%m%d)
-          TARBALL=$(find result/tarball -name "*.tar.xz" | head -1)
-          FINAL="${{ matrix.name }}-Droidspaces-rootfs-aarch64-${DATE}-${{ needs.setup.outputs.build_id }}.tar.xz"
-          cp "$TARBALL" "$FINAL"
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}-rootfs
-          path: "*.tar.xz"
-          retention-days: 1
+          if-no-files-found: error
 
   release:
-    if: ${{ github.event.inputs.update_json_only != 'true' }}
-    needs: [setup, build, build-nixos]
+    needs: [setup, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          pattern: "*-rootfs"
           merge-multiple: true
 
-      - name: Create Unified Release
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.setup.outputs.build_id }}
           name: "Droidspaces RootFS ${{ needs.setup.outputs.build_id }}"
           files: "*.tar.xz"
           body: |
-            Automated Droidspaces RootFS Multi-Build
+            Automated Droidspaces RootFS multi-arch build
             Built on: ${{ needs.setup.outputs.build_date }}
             Build ID: ${{ needs.setup.outputs.build_id }}
-            
-            Included Templates:
-            ${{ join(fromJson(needs.setup.outputs.templates), ', ') }}
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update rootfs.json Registry
+      - name: Regenerate and push rootfs.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 scripts/update_rootfs_json.py .
-
-      - name: Commit and Push rootfs.json
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 scripts/generate_rootfs_json.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add rootfs.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: update rootfs.json for release ${{ needs.setup.outputs.build_id }}"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          else
-            echo "No changes in rootfs.json to push."
-          fi
+          git diff --cached --quiet && { echo "rootfs.json unchanged"; exit 0; }
+          git commit -m "chore: update rootfs.json for release ${{ needs.setup.outputs.build_id }}"
+          git pull --rebase origin main
+          git push origin HEAD:main
 
   update-json:
-    needs: [release]
-    if: always() && (needs.release.result == 'success' || github.event.inputs.update_json_only == 'true')
+    if: ${{ github.event.inputs.update_json_only == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Update rootfs.json Registry
-        run: python3 scripts/update_rootfs_json.py .
+      - name: Regenerate and push rootfs.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Commit and Push rootfs.json
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 scripts/generate_rootfs_json.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add rootfs.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: update rootfs.json"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          else
-            echo "No changes in rootfs.json to push."
-          fi
+          git diff --cached --quiet && { echo "rootfs.json unchanged"; exit 0; }
+          git commit -m "chore: update rootfs.json"
+          git pull --rebase origin main
+          git push origin HEAD:main

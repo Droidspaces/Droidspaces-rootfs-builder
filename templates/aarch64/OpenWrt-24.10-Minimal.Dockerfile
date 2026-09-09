@@ -145,4 +145,8 @@ EOF_RUN
 
 # Stage 3: flatten to scratch for export
 FROM scratch AS export
+LABEL droidspaces.name="OpenWrt 24.10 - Minimal (iptables-legacy)" \
+      droidspaces.distro="OpenWrt" \
+      droidspaces.description="Minimal OpenWrt 24.10 router rootfs built for Android kernels: nftables/fw4 stripped out in favor of iptables-legacy + fw3, with full firewall (NAT, zones, masquerade) working. Tuned for VirtualAP's managed-hotspot (container) mode." \
+      droidspaces.author="Droidspaces developers"
 COPY --from=customizer / /

@@ -1,13 +1,12 @@
-# Dockerfile (CLI)
-# Stage 1: Build and customize the rootfs for development (CLI - Debian 13)
+# Dockerfile (Minimal)
+# Stage 1: Build and customize the rootfs for development (Minimal)
 ARG TARGETPLATFORM
-FROM debian:trixie AS customizer
+FROM ubuntu:24.04 AS customizer
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update base system and enable non-free/contrib for hfsprogs
-RUN (sed -i 's/main/main contrib non-free/g' /etc/apt/sources.list 2>/dev/null || sed -i 's/Components: main/Components: main contrib non-free/g' /etc/apt/sources.list.d/debian.sources) && \
-    apt-get update && apt-get upgrade -y
+# Update base system
+RUN apt-get update && apt-get upgrade -y
 
 # Copy custom scripts first
 COPY scripts/download-firmware /usr/local/bin/
@@ -18,7 +17,7 @@ COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
 # Make scripts executable
 RUN chmod +x /usr/local/bin/download-firmware /etc/profile.d/ds-aliases.sh
 
-# This is the main installation layer for CLI/Dev tools
+# Install Minimal package set
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # Core utilities
@@ -39,82 +38,29 @@ RUN apt-get update && \
     dbus \
     systemd-sysv \
     systemd-resolved \
-    # Compression tools
-    zip \
-    unzip \
-    p7zip-full \
-    bzip2 \
-    xz-utils \
-    tar \
-    gzip \
-    # System tools
-    htop \
-    vim \
-    nano \
+    # Basic tools
     git \
+    nano \
     sudo \
+    # Networking & SSH
     openssh-server \
     net-tools \
     iptables \
     iputils-ping \
     iproute2 \
     dnsutils \
-    usbutils \
-    pciutils \
-    lsof \
-    psmisc \
-    procps \
-    fastfetch \
-    kmod \
-    # Wireless networking tools
-    iw \
     # Logging & Rotation
     logrotate \
-    # C/C++ Development
-    build-essential \
-    gcc \
-    g++ \
-    gdb \
-    make \
-    cmake \
-    autoconf \
-    automake \
-    libtool \
-    pkg-config \
-    # Additional dev tools
-    clang \
-    llvm \
-    valgrind \
-    strace \
-    ltrace \
-    # Python Development
-    python3 \
-    python3-pip \
-    python3-dev \
-    python3-venv \
-    python-is-python3 \
-    # File system tools
-    dosfstools \
-    exfatprogs \
-    btrfs-progs \
-    ntfs-3g \
-    xfsprogs \
-    jfsutils \
-    hfsprogs \
-    reiserfsprogs \
-    cryptsetup \
-    nilfs-tools \
-    udftools \
-    f2fs-tools \
-    # Docker
-    docker.io \
-    docker-compose \
-    docker-cli \
-    && apt-get autoremove -y && \
+    # Procps for system monitoring
+    procps \
+    # Essential kernel module support
+    kmod \
+    && apt-get purge -y gdm3 gnome-session gnome-shell whoopsie && \
+    apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Configure iptables-legacy (Required for Android compatibility)
+# Configure iptables-legacy (MANDATORY for Android compatibility)
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
     update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
@@ -126,8 +72,8 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    # Remove default user if it exists
-    deluser --remove-home debian || true
+    # Remove default ubuntu user if it exists
+    deluser --remove-home ubuntu || true
 
 # Fix DHCP in the container
 RUN mkdir -p /etc/systemd/network && \
@@ -147,7 +93,6 @@ EOF
 
 # Apply Android compatibility fixes (Systemd and Udev)
 RUN <<EOF_RUN
-
 # --- 1. General Fixes ---
 # Android network group setup (required for socket access on Android kernels)
 grep -q '^aid_inet:' /etc/group    || echo 'aid_inet:x:3003:'    >> /etc/group
@@ -271,6 +216,14 @@ RUN apt-get purge -y qemu-* binfmt-support || true && \
     apt-get install -y binfmt-support && \
     # Add amd64 architecture and install libc6:amd64
     dpkg --add-architecture amd64 && \
+    sed -i '/^Types: deb$/a Architectures: arm64 armhf' /etc/apt/sources.list.d/ubuntu.sources && \
+    echo "" >> /etc/apt/sources.list.d/ubuntu.sources && \
+    echo "Types: deb" >> /etc/apt/sources.list.d/ubuntu.sources && \
+    echo "URIs: http://archive.ubuntu.com/ubuntu/" >> /etc/apt/sources.list.d/ubuntu.sources && \
+    echo "Suites: noble noble-updates noble-security" >> /etc/apt/sources.list.d/ubuntu.sources && \
+    echo "Components: main universe restricted multiverse" >> /etc/apt/sources.list.d/ubuntu.sources && \
+    echo "Architectures: amd64" >> /etc/apt/sources.list.d/ubuntu.sources && \
+    echo "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg" >> /etc/apt/sources.list.d/ubuntu.sources && \
     apt-get update && \
     apt-get install -y libc6:amd64
 
@@ -280,6 +233,10 @@ RUN apt-get clean && \
 
 # Stage 2: Export to scratch for extraction
 FROM scratch AS export
+LABEL droidspaces.name="Ubuntu 24.04.04 LTS - Minimal" \
+      droidspaces.distro="Ubuntu" \
+      droidspaces.description="Minimal Ubuntu 24.04 rootfs with basic packages." \
+      droidspaces.author="Droidspaces developers"
 
 # Copy the entire filesystem from the customizer stage
 COPY --from=customizer / /

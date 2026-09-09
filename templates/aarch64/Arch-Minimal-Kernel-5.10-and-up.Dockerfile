@@ -1,5 +1,5 @@
-# Dockerfile (Arch Linux Base)
-# Stage 1: Build and customize the rootfs for development (Base - Arch Linux)
+# Dockerfile (Arch Linux Minimal)
+# Stage 1: Build and customize the rootfs for development (Minimal - Arch Linux)
 ARG TARGETPLATFORM
 FROM ogarcia/archlinux AS customizer
 
@@ -22,42 +22,21 @@ RUN pacman -Syu --noconfirm && \
     # systemd includes udev, networkd, resolved
     systemd \
     dbus \
-    # System tools
-    htop \
-    vim \
-    nano \
+    # Basic tools
     git \
+    nano \
     sudo \
+    # Networking & SSH
     openssh \
     net-tools \
     iptables \
     iputils \
     iproute2 \
     bind \
-    usbutils \
-    pciutils \
-    lsof \
-    psmisc \
-    procps-ng \
-    fastfetch \
-    kmod \
     # Logging & Rotation
     logrotate \
-    # Development tools
-    base-devel \
-    cmake \
-    git \
-    clang \
-    llvm \
-    valgrind \
-    strace \
-    ltrace \
-    # Python
-    python \
-    python-pip \
-    # Docker
-    docker \
-    docker-compose \
+    # Procps-ng for system monitoring
+    procps-ng \
     && pacman -Scc --noconfirm
 
 # Copy our bashrc script to the rootfs
@@ -199,6 +178,10 @@ RUN pacman -Scc --noconfirm && \
 
 # Stage 2: Export to scratch for extraction
 FROM scratch AS export
+LABEL droidspaces.name="Arch Linux - Minimal" \
+      droidspaces.distro="Arch" \
+      droidspaces.description="Minimal Arch Linux rootfs with basic packages. (Runs on Kernel 5.10 and above only)." \
+      droidspaces.author="Droidspaces developers"
 
 # Copy the entire filesystem from the customizer stage
 COPY --from=customizer / /

@@ -1,7 +1,7 @@
 # Dockerfile (Minimal)
-# Stage 1: Build and customize the rootfs for development (Minimal)
+# Stage 1: Build and customize the rootfs for development (Minimal - Kali Rolling)
 ARG TARGETPLATFORM
-FROM ubuntu:24.04 AS customizer
+FROM kalilinux/kali-rolling AS customizer
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -38,7 +38,7 @@ RUN apt-get update && \
     dbus \
     systemd-sysv \
     systemd-resolved \
-    # Basic tools
+    # Basic tools requested by user
     git \
     nano \
     sudo \
@@ -49,14 +49,17 @@ RUN apt-get update && \
     iputils-ping \
     iproute2 \
     dnsutils \
-    # Logging & Rotation
-    logrotate \
     # Procps for system monitoring
     procps \
     # Essential kernel module support
     kmod \
-    && apt-get purge -y gdm3 gnome-session gnome-shell whoopsie && \
-    apt-get autoremove -y && \
+    # Official Kali Zsh shell and plugins
+    zsh \
+    zsh-autosuggestions \
+    zsh-syntax-highlighting \
+    command-not-found \
+    kali-defaults \
+    && apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -64,7 +67,7 @@ RUN apt-get update && \
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
     update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
-# Configure locales, environment, SSH, and user setup
+# Configure locales, environment, SSH, user setup, and official Zsh default shell
 RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     locale-gen && \
     update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && \
@@ -72,8 +75,18 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    # Remove default ubuntu user if it exists
-    deluser --remove-home ubuntu || true
+    # Set Zsh as default shell for root and future users
+    chsh -s /bin/zsh root && \
+    if [ -f /etc/default/useradd ]; then sed -i 's|^SHELL=.*|SHELL=/bin/zsh|' /etc/default/useradd; fi && \
+    if [ -f /etc/adduser.conf ]; then sed -i 's|^DSHELL=.*|DSHELL=/bin/zsh|' /etc/adduser.conf; fi && \
+    # Copy official Kali .zshrc to root
+    if [ -f /etc/skel/.zshrc ]; then cp /etc/skel/.zshrc /root/.zshrc; fi && \
+    # Ensure custom aliases are loaded in Zsh
+    mkdir -p /etc/zsh && \
+    echo '[ -f /etc/profile.d/ds-aliases.sh ] && . /etc/profile.d/ds-aliases.sh' >> /etc/zsh/zshrc && \
+    # Remove default users if they exist
+    deluser --remove-home kali || true && \
+    deluser --remove-home debian || true
 
 # Fix DHCP in the container
 RUN mkdir -p /etc/systemd/network && \
@@ -93,6 +106,7 @@ EOF
 
 # Apply Android compatibility fixes (Systemd and Udev)
 RUN <<EOF_RUN
+
 # --- 1. General Fixes ---
 # Android network group setup (required for socket access on Android kernels)
 grep -q '^aid_inet:' /etc/group    || echo 'aid_inet:x:3003:'    >> /etc/group
@@ -216,14 +230,6 @@ RUN apt-get purge -y qemu-* binfmt-support || true && \
     apt-get install -y binfmt-support && \
     # Add amd64 architecture and install libc6:amd64
     dpkg --add-architecture amd64 && \
-    sed -i '/^Types: deb$/a Architectures: arm64 armhf' /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Types: deb" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "URIs: http://archive.ubuntu.com/ubuntu/" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Suites: noble noble-updates noble-security" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Components: main universe restricted multiverse" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Architectures: amd64" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg" >> /etc/apt/sources.list.d/ubuntu.sources && \
     apt-get update && \
     apt-get install -y libc6:amd64
 
@@ -233,6 +239,10 @@ RUN apt-get clean && \
 
 # Stage 2: Export to scratch for extraction
 FROM scratch AS export
+LABEL droidspaces.name="Kali Linux - Minimal" \
+      droidspaces.distro="Kali" \
+      droidspaces.description="Minimal Kali Linux rootfs with basic packages." \
+      droidspaces.author="Droidspaces developers"
 
 # Copy the entire filesystem from the customizer stage
 COPY --from=customizer / /

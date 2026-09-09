@@ -1,12 +1,13 @@
-# Dockerfile (CLI)
-# Stage 1: Build and customize the rootfs for development (Base - Ubuntu 22.04)
+# Dockerfile (Minimal)
+# Stage 1: Build and customize the rootfs for development (Minimal - Debian 13)
 ARG TARGETPLATFORM
-FROM ubuntu:22.04 AS customizer
+FROM debian:trixie AS customizer
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update base system
-RUN apt-get update && apt-get upgrade -y
+# Update base system and enable non-free/contrib
+RUN (sed -i 's/main/main contrib non-free/g' /etc/apt/sources.list 2>/dev/null || sed -i 's/Components: main/Components: main contrib non-free/g' /etc/apt/sources.list.d/debian.sources) && \
+    apt-get update && apt-get upgrade -y
 
 # Copy custom scripts first
 COPY scripts/download-firmware /usr/local/bin/
@@ -17,18 +18,8 @@ COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
 # Make scripts executable
 RUN chmod +x /usr/local/bin/download-firmware /etc/profile.d/ds-aliases.sh
 
-# This is the main installation layer. All package installations, PPA additions,
-# and setup are done here to minimize layers and maximize build speed.
+# Install Minimal package set
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    # Essentials for adding PPAs
-    software-properties-common \
-    gnupg \
-    # Add PPAs for fastfetch and Firefox ESR
-    && add-apt-repository ppa:zhangsongcui3371/fastfetch -y && \
-    # Update package lists again after adding PPAs
-    apt-get update && \
-    # Install all packages in a single command
     apt-get install -y --no-install-recommends \
     # Core utilities
     bash \
@@ -47,86 +38,31 @@ RUN apt-get update && \
     udev \
     dbus \
     systemd-sysv \
-    # Compression tools
-    zip \
-    unzip \
-    p7zip-full \
-    bzip2 \
-    xz-utils \
-    tar \
-    gzip \
-    # System tools
-    htop \
-    vim \
-    nano \
+    systemd-resolved \
+    # Basic tools requested by user
     git \
+    nano \
     sudo \
+    # Networking & SSH
     openssh-server \
     net-tools \
     iptables \
     iputils-ping \
     iproute2 \
     dnsutils \
-    usbutils \
-    pciutils \
-    lsof \
-    psmisc \
+    # Procps for system monitoring
     procps \
-    fastfetch \
+    # Essential kernel module support
     kmod \
-    # Wireless networking tools for hotspot functionality
-    iw \
-    # Logging & Rotation
-    logrotate \
-    # C/C++ Development
-    build-essential \
-    gcc \
-    g++ \
-    gdb \
-    make \
-    cmake \
-    autoconf \
-    automake \
-    libtool \
-    pkg-config \
-    # File system tools
-    dosfstools \
-    exfatprogs \
-    btrfs-progs \
-    ntfs-3g \
-    xfsprogs \
-    jfsutils \
-    hfsprogs \
-    reiserfsprogs \
-    cryptsetup \
-    nilfs-tools \
-    udftools \
-    f2fs-tools \
-    # Python Development
-    python3 \
-    python3-pip \
-    python3-dev \
-    python3-venv \
-    python-is-python3 \
-    # Additional dev tools
-    clang \
-    llvm \
-    valgrind \
-    strace \
-    ltrace \
-    # Docker
-    docker.io \
-    docker-compose-v2 \
-    && apt-get purge -y gdm3 gnome-session gnome-shell whoopsie && \
-    apt-get autoremove -y && \
+    && apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Configure iptables-legacy (Required for Android compatibility)
+# Configure iptables-legacy (MANDATORY for Android compatibility)
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
     update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
-# Configure locales, environment, SSH, Docker, and user setup in a single layer
+# Configure locales, environment, SSH, and user setup
 RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     locale-gen && \
     update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && \
@@ -134,10 +70,8 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    # Create default user directories
-    xdg-user-dirs-update && \
-    # Remove default ubuntu user if it exists
-    deluser --remove-home ubuntu || true
+    # Remove default user if it exists
+    deluser --remove-home debian || true
 
 # Fix DHCP in the container
 RUN mkdir -p /etc/systemd/network && \
@@ -157,6 +91,7 @@ EOF
 
 # Apply Android compatibility fixes (Systemd and Udev)
 RUN <<EOF_RUN
+
 # --- 1. General Fixes ---
 # Android network group setup (required for socket access on Android kernels)
 grep -q '^aid_inet:' /etc/group    || echo 'aid_inet:x:3003:'    >> /etc/group
@@ -280,10 +215,6 @@ RUN apt-get purge -y qemu-* binfmt-support || true && \
     apt-get install -y binfmt-support && \
     # Add amd64 architecture and install libc6:amd64
     dpkg --add-architecture amd64 && \
-    sed -i 's/^deb /deb [arch=arm64,armhf] /g' /etc/apt/sources.list && \
-    echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list && \
-    echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
-    echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y libc6:amd64
 
@@ -293,6 +224,10 @@ RUN apt-get clean && \
 
 # Stage 2: Export to scratch for extraction
 FROM scratch AS export
+LABEL droidspaces.name="Debian GNU/Linux 13 (Trixie) - Minimal" \
+      droidspaces.distro="Debian" \
+      droidspaces.description="Minimal Debian 13 rootfs with basic packages." \
+      droidspaces.author="Droidspaces developers"
 
 # Copy the entire filesystem from the customizer stage
 COPY --from=customizer / /

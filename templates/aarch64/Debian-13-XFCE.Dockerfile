@@ -1,12 +1,13 @@
 # Dockerfile (GUI)
-# Stage 1: Build and customize the rootfs for development (GUI - Kali Rolling)
+# Stage 1: Build and customize the rootfs for development (GUI - Debian 13)
 ARG TARGETPLATFORM
-FROM kalilinux/kali-rolling AS customizer
+FROM debian:trixie AS customizer
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update base system
-RUN apt-get update && apt-get upgrade -y
+# Update base system and enable non-free/contrib for hfsprogs
+RUN (sed -i 's/main/main contrib non-free/g' /etc/apt/sources.list 2>/dev/null || sed -i 's/Components: main/Components: main contrib non-free/g' /etc/apt/sources.list.d/debian.sources) && \
+    apt-get update && apt-get upgrade -y
 
 # Copy custom scripts first
 COPY scripts/download-firmware /usr/local/bin/
@@ -17,7 +18,7 @@ COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
 # Make scripts executable
 RUN chmod +x /usr/local/bin/download-firmware /etc/profile.d/ds-aliases.sh
 
-# Main installation layer for everything (Minimal + CLI + GUI + Dev tools)
+# Main installation layer for everything (Minimal + CLI + GUI)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # Core utilities
@@ -70,12 +71,6 @@ RUN apt-get update && \
     iw \
     # Logging & Rotation
     logrotate \
-    # Official Kali Zsh shell and plugins
-    zsh \
-    zsh-autosuggestions \
-    zsh-syntax-highlighting \
-    command-not-found \
-    kali-defaults \
     # Development tools
     build-essential \
     gcc \
@@ -106,16 +101,18 @@ RUN apt-get update && \
     btrfs-progs \
     ntfs-3g \
     xfsprogs \
+    jfsutils \
     hfsprogs \
+    reiserfsprogs \
     cryptsetup \
+    nilfs-tools \
     udftools \
     f2fs-tools \
     # Audio
     pulseaudio \
     pulseaudio-utils \
     pavucontrol \
-    # Kali XFCE Desktop Environment and essential tools
-    kali-desktop-xfce \
+    # XFCE Desktop Environment and essential tools
     xfce4 \
     desktop-base \
     xfce4-terminal \
@@ -135,13 +132,18 @@ RUN apt-get update && \
     dbus-x11 \
     at-spi2-core \
     tumbler \
-    kali-themes \
     # Icon themes
-    adwaita-icon-theme \
+    adwaita-icon-theme-full \
     hicolor-icon-theme \
     gnome-icon-theme \
     tango-icon-theme \
+    # GTK theme engines and popular themes
+    gtk2-engines-murrine \
+    gtk2-engines-pixbuf \
+    arc-theme \
+    numix-gtk-theme \
     papirus-icon-theme \
+    greybird-gtk-theme \
     # Essential fonts for GUI rendering
     fonts-dejavu-core \
     fonts-liberation \
@@ -183,7 +185,7 @@ RUN apt-get update && \
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
     update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
-# Configure locales, environment, SSH, user setup, and official Zsh default shell
+# Configure locales, environment, SSH, and user setup
 RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     locale-gen && \
     update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && \
@@ -191,19 +193,9 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    # Set Zsh as default shell for root and future users
-    chsh -s /bin/zsh root && \
-    if [ -f /etc/default/useradd ]; then sed -i 's|^SHELL=.*|SHELL=/bin/zsh|' /etc/default/useradd; fi && \
-    if [ -f /etc/adduser.conf ]; then sed -i 's|^DSHELL=.*|DSHELL=/bin/zsh|' /etc/adduser.conf; fi && \
-    # Copy official Kali .zshrc to root
-    if [ -f /etc/skel/.zshrc ]; then cp /etc/skel/.zshrc /root/.zshrc; fi && \
-    # Ensure custom aliases are loaded in Zsh
-    mkdir -p /etc/zsh && \
-    echo '[ -f /etc/profile.d/ds-aliases.sh ] && . /etc/profile.d/ds-aliases.sh' >> /etc/zsh/zshrc && \
     # Initialize default user directories for GUI apps
     xdg-user-dirs-update && \
-    # Remove default users if they exist
-    deluser --remove-home kali || true && \
+    # Remove default user if it exists
     deluser --remove-home debian || true
 
 # Fix DHCP in the container
@@ -359,7 +351,15 @@ RUN gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true && \
     fc-cache -fv
 
 # Fix xfwm4 vblank_mode for Turnip (Qualcomm GPU) - prevents XFCE compositor hang
-# Pre-place the complete xfwm4.xml with the correct value already set.
+# The sed fix 's/vblank_mode=auto/vblank_mode=off/' does NOT work on the XML format
+# (the file uses value="auto" as an XML attribute, not a bare key=value pair).
+# Instead we pre-place the complete xfwm4.xml with the correct value already set.
+# xfconf will not regenerate the file if it already exists, so this is reliable.
+#
+# Coverage:
+#   /etc/skel  → copied verbatim into every new user's $HOME by adduser
+#   /root      → root's home is never seeded from /etc/skel, so patch it directly
+#   /usr/share/xfwm4/defaults → xfwm4's key=value seed file, read before xfconf
 COPY scripts/xfwm4.xml /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
 COPY scripts/xfwm4.xml /root/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
 
@@ -407,6 +407,10 @@ RUN apt-get clean && \
 
 # Stage 2: Export to scratch for extraction
 FROM scratch AS export
+LABEL droidspaces.name="Debian 13 GNU/Linux (Trixie) - XFCE" \
+      droidspaces.distro="Debian" \
+      droidspaces.description="Debian 13 rootfs with basic packages, development tools, Docker, XFCE desktop environment." \
+      droidspaces.author="Droidspaces developers"
 
 # Copy the entire filesystem from the customizer stage
 COPY --from=customizer / /

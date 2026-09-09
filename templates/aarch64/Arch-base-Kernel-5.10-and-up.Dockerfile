@@ -1,25 +1,11 @@
-# Dockerfile (Minimal)
-# Stage 1: Build and customize the rootfs for development (Minimal - Ubuntu 22.04)
+# Dockerfile (Arch Linux Base)
+# Stage 1: Build and customize the rootfs for development (Base - Arch Linux)
 ARG TARGETPLATFORM
-FROM ubuntu:22.04 AS customizer
+FROM ogarcia/archlinux AS customizer
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Update base system
-RUN apt-get update && apt-get upgrade -y
-
-# Copy custom scripts first
-COPY scripts/download-firmware /usr/local/bin/
-
-# Copy our bashrc script to the rootfs
-COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
-
-# Make scripts executable
-RUN chmod +x /usr/local/bin/download-firmware /etc/profile.d/ds-aliases.sh
-
-# Install Minimal package set
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+# Update base system and install key packages
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
     # Core utilities
     bash \
     dialog \
@@ -32,47 +18,68 @@ RUN apt-get update && \
     curl \
     wget \
     ca-certificates \
-    locales \
     bash-completion \
-    udev \
+    # systemd includes udev, networkd, resolved
+    systemd \
     dbus \
-    systemd-sysv \
-    # Basic tools
-    git \
+    # System tools
+    htop \
+    vim \
     nano \
+    git \
     sudo \
-    # Networking & SSH
-    openssh-server \
+    openssh \
     net-tools \
     iptables \
-    iputils-ping \
+    iputils \
     iproute2 \
-    dnsutils \
+    bind \
+    usbutils \
+    pciutils \
+    lsof \
+    psmisc \
+    procps-ng \
+    fastfetch \
+    kmod \
     # Logging & Rotation
     logrotate \
-    # Procps for system monitoring
-    procps \
-    # Essential kernel module support
-    kmod \
-    && apt-get purge -y gdm3 gnome-session gnome-shell whoopsie || true && \
-    apt-get autoremove -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    # Development tools
+    base-devel \
+    cmake \
+    git \
+    clang \
+    llvm \
+    valgrind \
+    strace \
+    ltrace \
+    # Python
+    python \
+    python-pip \
+    # Docker
+    docker \
+    docker-compose \
+    && pacman -Scc --noconfirm
 
-# Configure iptables-legacy (MANDATORY for Android compatibility)
-RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
-    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+# Copy our bashrc script to the rootfs
+COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
 
-# Configure locales, environment, SSH, and user setup
+# Make scripts executable
+RUN chmod +x /etc/profile.d/ds-aliases.sh
+
+# Configure legacy iptables (MANDATORY for Android compatibility)
+RUN ln -sf /usr/bin/iptables-legacy /usr/bin/iptables && \
+    ln -sf /usr/bin/ip6tables-legacy /usr/bin/ip6tables && \
+    ln -sf /usr/bin/arptables-legacy /usr/bin/arptables && \
+    ln -sf /usr/bin/ebtables-legacy /usr/bin/ebtables
+
+# Configure locales and environment
 RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     locale-gen && \
-    update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && \
+    echo "LANG=en_US.UTF-8" > /etc/locale.conf && \
     # Configure SSH (Disable Root Login)
     mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    # Remove default ubuntu user if it exists
-    deluser --remove-home ubuntu || true
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 # Fix DHCP in the container
 RUN mkdir -p /etc/systemd/network && \
@@ -101,15 +108,8 @@ grep -q '^aid_net_admin:' /etc/group || echo 'aid_net_admin:x:3005:' >> /etc/gro
 # Root permissions for Android hardware access
 usermod -a -G aid_inet,aid_net_raw,input,video,tty root || true
 
-# _apt needs aid_inet as primary group so apt works on Android
+# Arch doesn't have _apt user by default, but if some tool creates it:
 grep -q '^_apt:' /etc/passwd && usermod -g aid_inet _apt || true
-
-# Future users created with adduser automatically get network access
-if [ -f /etc/adduser.conf ]; then
-    sed -i '/^EXTRA_GROUPS=/d; /^ADD_EXTRA_GROUPS=/d' /etc/adduser.conf
-    echo 'ADD_EXTRA_GROUPS=1' >> /etc/adduser.conf
-    echo 'EXTRA_GROUPS="aid_inet aid_net_raw input video tty"' >> /etc/adduser.conf
-fi
 
 # --- 2. Systemd-Specific Fixes ---
 # Mask problematic services for Android kernels
@@ -135,7 +135,7 @@ EOT
 
 # Enable essential services
 mkdir -p /etc/systemd/system/multi-user.target.wants
-GUEST_SYSTEMD_PATH="/lib/systemd/system"
+GUEST_SYSTEMD_PATH="/usr/lib/systemd/system"
 for service in dbus.service systemd-udevd.service systemd-resolved.service systemd-networkd.service NetworkManager.service; do
     if [ -f "$GUEST_SYSTEMD_PATH/$service" ]; then
         ln -sf "$GUEST_SYSTEMD_PATH/$service" "/etc/systemd/system/multi-user.target.wants/$service"
@@ -193,41 +193,16 @@ fi
 echo "Post-extraction fixes applied on $(date)" > /etc/droidspaces
 EOF_RUN
 
-# Copy binfmt scripts
-COPY scripts/binfmt/qemu-binfmt-register.sh /usr/local/bin/
-COPY scripts/binfmt/qemu-binfmt-register.service /etc/systemd/system/
-RUN chmod +x /usr/local/bin/qemu-binfmt-register.sh && \
-    chmod 644 /etc/systemd/system/qemu-binfmt-register.service && \
-    ln -sf /etc/systemd/system/qemu-binfmt-register.service /etc/systemd/system/multi-user.target.wants/qemu-binfmt-register.service
-
-# Purge and reinstall qemu and binfmt in the exact order specified
-RUN apt-get purge -y qemu-* binfmt-support || true && \
-    apt-get autoremove -y && \
-    apt-get autoclean && \
-    # Remove any leftover config files
-    rm -rf /var/lib/binfmts/* && \
-    rm -rf /etc/binfmt.d/* && \
-    rm -rf /usr/lib/binfmt.d/qemu-* && \
-    # Update package lists
-    apt-get update && \
-    # Install ONLY these packages (in this specific order)
-    apt-get install -y qemu-user-static && \
-    apt-get install -y binfmt-support && \
-    # Add amd64 architecture and install libc6:amd64
-    dpkg --add-architecture amd64 && \
-    sed -i 's/^deb /deb [arch=arm64,armhf] /g' /etc/apt/sources.list && \
-    echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list && \
-    echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
-    echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y libc6:amd64
-
-# Final cleanup of APT cache
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Final cleanup
+RUN pacman -Scc --noconfirm && \
+    rm -rf /var/cache/pacman/pkg/*
 
 # Stage 2: Export to scratch for extraction
 FROM scratch AS export
+LABEL droidspaces.name="Arch Linux - Base" \
+      droidspaces.distro="Arch" \
+      droidspaces.description="Arch Linux rootfs with basic packages, development tools and Docker (Runs on Kernel 5.10 and above only)." \
+      droidspaces.author="Droidspaces developers"
 
 # Copy the entire filesystem from the customizer stage
 COPY --from=customizer / /

@@ -172,4 +172,8 @@ RUN rm -rf /var/cache/tdnf /var/lib/tdnf /tmp/* /var/tmp/* || true
 
 # Stage 2: Export to scratch for extraction.
 FROM scratch AS export
+LABEL droidspaces.name="Azure Linux 3.0 - Minimal" \
+      droidspaces.distro="Azure Linux" \
+      droidspaces.description="Azure Linux 3.0 rootfs with basic packages." \
+      droidspaces.author="Droidspaces developers"
 COPY --from=customizer / /

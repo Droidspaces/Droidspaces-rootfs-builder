@@ -1,0 +1,6 @@
+{
+  "aarch64": { "platform": "linux/arm64",  "runner": "ubuntu-24.04-arm" },
+  "armhf":   { "platform": "linux/arm/v7", "runner": "ubuntu-24.04-arm" },
+  "x86_64":  { "platform": "linux/amd64",  "runner": "ubuntu-latest" },
+  "x86":     { "platform": "linux/386",    "runner": "ubuntu-latest" }
+}

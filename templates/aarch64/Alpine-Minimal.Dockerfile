@@ -1,5 +1,5 @@
-# Dockerfile (Alpine Linux Base)
-# Stage 1: Build and customize the rootfs for development (Base - Alpine Linux)
+# Dockerfile (Alpine Linux Minimal)
+# Stage 1: Build and customize the rootfs for development (Minimal - Alpine Linux)
 ARG TARGETPLATFORM
 FROM alpine:3.23 AS customizer
 
@@ -21,33 +21,15 @@ RUN apk update && apk upgrade && \
     bash-completion \
     shadow \
     sudo \
-    # System tools
-    htop \
-    vim \
-    nano \
-    git \
-    sudo \
+    # Networking & SSH
     openssh \
     net-tools \
     iptables-legacy \
     iputils \
     iproute2 \
+    # System monitoring
     procps \
-    fastfetch \
-    kmod \
-    # Development tools
-    build-base \
-    cmake \
-    clang \
-    llvm \
-    valgrind \
-    strace \
-    ltrace \
-    # Python
-    python3 \
-    py3-pip \
-    # Docker
-    docker \
+    htop \
     # DHCP client + openrc
     dhcpcd \
     openrc \
@@ -111,10 +93,6 @@ ln -sf /etc/init.d/dhcpcd /etc/runlevels/default/dhcpcd
 # Same for sshd if we want it on boot
 ln -sf /etc/init.d/sshd /etc/runlevels/default/sshd
 
-# Wire up containerd and docker to the default runlevel
-ln -sf /etc/init.d/containerd /etc/runlevels/default/containerd
-ln -sf /etc/init.d/docker /etc/runlevels/default/docker
-
 # Replace dhcpcd init script to only start in NAT network mode
 # This is the OpenRC equivalent of systemd's ExecCondition - if the container
 # is running in host network mode, dhcpcd is cleanly skipped at boot to prevent
@@ -163,6 +141,10 @@ RUN rm -rf /var/cache/apk/*
 
 # Stage 2: Export to scratch for extraction
 FROM scratch AS export
+LABEL droidspaces.name="Alpine Linux v3.23 - Minimal" \
+      droidspaces.distro="Alpine" \
+      droidspaces.description="Minimal Alpine Linux v3.23 rootfs with basic packages." \
+      droidspaces.author="Droidspaces developers"
 
 # Copy the entire filesystem from the customizer stage
 COPY --from=customizer / /
