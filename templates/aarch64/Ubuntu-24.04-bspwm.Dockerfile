@@ -63,6 +63,7 @@ RUN apt-get update && \
     btop \
     vim \
     nano \
+    micro \
     git \
     sudo \
     openssh-server \

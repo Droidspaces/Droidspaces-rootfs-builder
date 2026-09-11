@@ -25,3 +25,12 @@ case "$(cfg_get DOCK full)" in
   compact) export UI_DOCK_LEFT="apps terminal files windows" UI_DOCK_CENTER="sep winmenu layout float fullscreen sep" UI_DOCK_RIGHT="send close" ;;
   *)       export UI_DOCK_LEFT="apps terminal files windows" UI_DOCK_CENTER="sep swap-prev swap-next shrink grow sep rotate balance layout sep float fullscreen send sep" UI_DOCK_RIGHT="close" ;;
 esac
+# A dead/unreachable PulseAudio server (host bridge not connected, or the container
+# started without audio) makes polybar's internal/pulseaudio module fail to connect,
+# which stalls the whole top bar's render loop instead of just disabling that module.
+# Drop it from the bar rather than lose the gear/power buttons behind it.
+if timeout 1 pactl info >/dev/null 2>&1; then
+  export UI_TOP_RIGHT="volume battery scale power"
+else
+  export UI_TOP_RIGHT="battery scale power"
+fi
