@@ -1,0 +1,10 @@
+@import "dpi"
+configuration { show-icons: false; font: "Inter 13"; }
+@import "colors"
+
+window { background-color: @base; border: 2px; border-color: @s1; border-radius: 18px; width: 92%; location: center; }
+mainbox { padding: 16px; children: [ inputbar, listview ]; }
+listview { lines: 0; enabled: false; }
+inputbar { background-color: @s0; border: 2px; border-color: @peach; border-radius: 12px; padding: 14px 16px; children: [ prompt, entry ]; }
+prompt { text-color: @peach; margin: 0 12px 0 0; }
+entry { text-color: @text; cursor-color: @peach; placeholder: "Password"; placeholder-color: @dim; }

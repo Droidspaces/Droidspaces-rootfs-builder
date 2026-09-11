@@ -1,0 +1,34 @@
+[global]
+monitor = 0
+follow = none
+width = (300, 900)
+height = 300
+origin = top-center
+offset = 0x140
+scale = 2
+corner_radius = 16
+frame_width = 2
+frame_color = "#45475a"
+separator_color = frame
+font = Inter 10
+format = "<b>%s</b>\n%b"
+padding = 14
+horizontal_padding = 18
+icon_theme = Papirus-Dark
+enable_recursive_icon_lookup = true
+max_icon_size = 64
+mouse_left_click = close_current
+mouse_right_click = close_all
+[urgency_low]
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+timeout = 4
+[urgency_normal]
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+timeout = 6
+[urgency_critical]
+background = "#1e1e2e"
+foreground = "#f38ba8"
+frame_color = "#f38ba8"
+timeout = 0

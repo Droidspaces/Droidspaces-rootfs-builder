@@ -1,0 +1,18 @@
+@import "dpi"
+configuration {
+    show-icons: true; icon-theme: "Papirus-Dark"; font: "Inter 12";
+    hover-select: true; me-select-entry: ""; me-accept-entry: "MousePrimary"; cycle: false;
+    filebrowser { directory: "~"; command: "~/.config/bspwm/wallpaper.sh set"; show-hidden: false; sorting-method: "name"; directories-first: true; }
+}
+@import "colors"
+window { background-color: @base; border: 2px; border-color: @s1; border-radius: 18px; width: 94%; location: center; }
+mainbox { padding: 16px; spacing: 12px; }
+inputbar { background-color: @s0; border: 2px; border-color: @peach; border-radius: 12px; padding: 12px 14px; children: [ prompt, entry ]; }
+prompt { text-color: @peach; margin: 0 12px 0 0; }
+entry { text-color: @text; cursor-color: @peach; placeholder: "Filter…"; placeholder-color: @dim; }
+listview { lines: 9; columns: 1; spacing: 4px; scrollbar: true; fixed-height: true; }
+element { padding: 10px 12px; border-radius: 10px; spacing: 12px; }
+element normal.normal, element alternate.normal { background-color: transparent; text-color: @text; }
+element selected.normal { background-color: @accent; text-color: @base; }
+element-icon { size: 1.6em; text-color: inherit; }
+element-text { text-color: inherit; vertical-align: 0.5; }

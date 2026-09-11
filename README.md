@@ -59,3 +59,21 @@ It lints labels, builds every template in parallel on the runner for its arch, c
 release with all tarballs, then regenerates and commits `rootfs.json`. Any failed build
 blocks the release. The manual "update_json_only" input regenerates `rootfs.json` from the
 current latest release without building.
+
+## Desktop templates and the desktop user
+
+GUI templates (`*-XFCE`, `Ubuntu-24.04-bspwm`) ship a systemd service that autostarts the
+desktop on the Termux:X11 display once the container reaches `graphical.target`. The service
+runs as root and drops to a **desktop user** before launching the session.
+
+- XFCE templates read **`XFCE_USER`** from `/run/droidspaces.env` (written by the host app).
+- `Ubuntu-24.04-bspwm` reads **`DESKTOP_USER`** the same way. Default (unset or `root`) runs
+  the desktop as root.
+
+`Ubuntu-24.04-bspwm` is XFCE's package set with the desktop swapped for the bspwm tiling WM
+plus a touch-friendly Catppuccin theme (polybar bar + dock, rofi menus, PulseAudio Volume Control,
+dynamic desktops, drag-to-resize, a settings hub). The theme lives in
+`scripts/bspwm/bspwm-theme/` and is seeded three ways so **every** user gets it by default: a
+read-only master at `/usr/share/droidspaces/bspwm-theme`, a build-time copy into `/root` and
+`/etc/skel`, and a runtime seed in `bspwm-start` for any user created without skel. The same
+`scripts/bspwm/bspwm-theme` payload is published as a standalone importer for raw bspwm installs.

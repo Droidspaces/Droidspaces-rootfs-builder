@@ -1,0 +1,51 @@
+@import "dpi"
+configuration {
+    modi: "drun,window";
+    drun-use-desktop-cache: true;
+    drun-reload-desktop-cache: true;
+    sort: true;
+    sorting-method: "fzf";
+    drun-match-fields: "name,generic,exec,keywords";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    drun-display-format: "{name}";
+    display-drun: "";
+    display-window: "";
+    font: "Inter 12";
+    terminal: "xfce4-terminal";
+    hover-select: true;
+    me-select-entry: "";
+    me-accept-entry: "MousePrimary";
+    cycle: false;
+}
+@import "colors"
+
+window {
+    background-color: @base;
+    border: 2px;
+    border-color: @s1;
+    border-radius: 18px;
+    width: 92%;
+    location: center;
+}
+mainbox { padding: 16px; spacing: 14px; }
+inputbar {
+    background-color: @s0;
+    border: 2px;
+    border-color: @accent;
+    border-radius: 12px;
+    padding: 14px 16px;
+    children: [ prompt, entry ];
+}
+prompt { text-color: @accent; margin: 0 12px 0 0; font: "Symbols Nerd Font Mono 14"; }
+entry  { text-color: @text; cursor-color: @accent; placeholder: "Search apps…"; placeholder-color: @dim; cursor: text; }
+listview { lines: 10; columns: 1; spacing: 6px; scrollbar: true; fixed-height: false; }
+element { padding: 12px 14px; border-radius: 12px; spacing: 14px; }
+element-icon { size: 1.8em; }
+
+element normal.normal, element alternate.normal { background-color: transparent; text-color: @text; }
+element normal.urgent, element alternate.urgent { background-color: transparent; text-color: @red; }
+element normal.active, element alternate.active { background-color: transparent; text-color: @accent; }
+element selected.normal, element selected.urgent, element selected.active { background-color: @accent; text-color: @base; }
+element-text { text-color: inherit; vertical-align: 0.5; }
+element-icon { text-color: inherit; }

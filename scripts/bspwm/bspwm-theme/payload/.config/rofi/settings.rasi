@@ -1,0 +1,16 @@
+@import "dpi"
+@import "colors"
+configuration { show-icons: false; font: "Inter 12"; hover-select: true; me-select-entry: ""; me-accept-entry: "MousePrimary"; cycle: false; }
+window { background-color: @base; border: 2px; border-color: @s1; border-radius: 22px; width: 92%; location: center; }
+mainbox { padding: 18px; spacing: 12px; children: [ inputbar, message, listview ]; }
+inputbar { background-color: transparent; padding: 4px 8px; children: [ prompt ]; }
+prompt { text-color: @accent; font: "Inter Semibold 13"; }
+message { background-color: @s0; border-radius: 12px; padding: 12px 14px; }
+textbox { text-color: @sub; font: "JetBrains Mono 11"; }
+listview { lines: 9; columns: 1; spacing: 8px; fixed-height: true; scrollbar: true; }
+element { padding: 16px 16px; border-radius: 14px; background-color: transparent; }
+element normal.normal, element alternate.normal { background-color: transparent; text-color: @text; }
+element normal.active,  element alternate.active { background-color: @s0; text-color: @accent; }
+element normal.urgent,  element alternate.urgent { background-color: transparent; text-color: @red; }
+element selected.normal, element selected.active, element selected.urgent { background-color: @accent; text-color: @base; }
+element-text { text-color: inherit; vertical-align: 0.5; font: "Inter 12"; }

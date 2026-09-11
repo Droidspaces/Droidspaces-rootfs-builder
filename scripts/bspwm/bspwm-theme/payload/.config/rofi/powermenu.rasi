@@ -1,0 +1,15 @@
+@import "dpi"
+configuration { show-icons: false; font: "Inter 13"; hover-select: true; me-select-entry: ""; me-accept-entry: "MousePrimary"; }
+@import "colors"
+
+window {
+    background-color: @base;
+    border: 2px; border-color: @s1; border-radius: 22px;
+    width: 92%; location: center;
+}
+mainbox { padding: 20px; spacing: 0; children: [ listview ]; }
+listview { lines: 1; columns: 3; spacing: 14px; layout: vertical; fixed-height: false; }
+element { padding: 30px 0; border-radius: 16px; background-color: @s0; }
+element normal.normal, element alternate.normal { background-color: @s0; text-color: @text; }
+element selected.normal { background-color: @red; text-color: @base; }
+element-text { text-color: inherit; horizontal-align: 0.5; vertical-align: 0.5; font: "Inter 13"; }

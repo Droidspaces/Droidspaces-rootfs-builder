@@ -1,0 +1,131 @@
+#!/bin/sh
+# Droidspaces: start the bspwm touch desktop on the Termux:X11 display.
+# Runs as root from bspwm-autostart.service, waits for the X server, seeds the theme into the
+# target user's home if missing, then drops privileges to DESKTOP_USER (default root) and starts
+# the session. Modelled on scripts/xfce-start.
+set -eu
+
+ENV_FILE=/run/droidspaces.env
+CONFIG=/run/droidspaces/container.config
+THEME_MASTER=/usr/share/droidspaces/bspwm-theme
+THEME_NAME=catppuccin-mocha-lavender-standard+default
+
+# Load host-provided environment overrides (DISPLAY, DESKTOP_USER, ...).
+if [ -f "$ENV_FILE" ]; then
+    set -a
+    . "$ENV_FILE"
+    set +a
+fi
+
+: "${DISPLAY:=:5}"
+export DISPLAY
+
+# Enable PulseAudio and VirGL based on container config.
+PULSE_ENABLED=0
+VIRGL_ENABLED=0
+if grep -q 'enable_pulseaudio=1' "$CONFIG" 2>/dev/null; then
+    PULSE_ENABLED=1
+    : "${PULSE_SERVER:=unix:/tmp/.pulse-socket}"
+    export PULSE_SERVER
+fi
+if grep -q 'enable_virgl=1' "$CONFIG" 2>/dev/null; then
+    VIRGL_ENABLED=1
+    : "${GALLIUM_DRIVER:=virpipe}"
+    export GALLIUM_DRIVER
+fi
+
+# Derive the X11 socket/lock from the display number, ignoring host prefix and screen suffix.
+DISPLAY_NUM=$(printf '%s' "$DISPLAY" | sed 's/^.*://; s/\..*$//')
+X11_SOCKET="/tmp/.X11-unix/X${DISPLAY_NUM}"
+X11_LOCK="/tmp/.X${DISPLAY_NUM}-lock"
+
+# Wait for Termux:X11. The user can open the app at any time; the desktop appears within seconds.
+waited=0
+until [ -S "$X11_SOCKET" ]; do
+    [ "$waited" -eq 0 ] && echo "Waiting for X server on $DISPLAY ($X11_SOCKET)..."
+    sleep 3; waited=$((waited + 3))
+done
+echo "X server up on $DISPLAY after ${waited}s"
+
+# Chown a path if it exists, acting on the link itself.
+safe_chown() {
+    if [ -e "$2" ] || [ -L "$2" ]; then
+        chown -h "$1" "$2"
+    fi
+}
+
+# Seed the theme into a home directory if it is not already there. $1 = home, $2 = owner (user:group).
+seed_theme() {
+    _home="$1"; _owner="$2"
+    [ -d "$THEME_MASTER/payload" ] || return 0
+    if [ ! -e "$_home/.config/bspwm/bspwmrc" ]; then
+        mkdir -p "$_home"
+        cp -a "$THEME_MASTER/payload/." "$_home/"
+        mkdir -p "$_home/.local/share/fonts"
+        cp -a "$THEME_MASTER/fonts/." "$_home/.local/share/fonts/" 2>/dev/null || true
+        # recreate the symlinks the payload cannot carry
+        mkdir -p "$_home/.config/gtk-4.0"
+        for f in gtk.css gtk-dark.css assets; do
+            ln -sfn "../../.themes/$THEME_NAME/gtk-4.0/$f" "$_home/.config/gtk-4.0/$f"
+        done
+        ln -sfn "../../Pictures/wallpapers/evening-sky.png" "$_home/.config/bspwm/wallpaper"
+        chmod +x "$_home"/.config/bspwm/*.sh "$_home"/.config/bspwm/*.py \
+                 "$_home"/.config/polybar/launch.sh "$_home"/start-desktop.sh 2>/dev/null || true
+        chmod -x "$_home"/.config/bspwm/autostart.d/* 2>/dev/null || true
+        [ -f "$_home/.config/Thunar/uca.xml" ] && \
+            sed -i "s#<unique-id>PLACEHOLDER</unique-id>#<unique-id>$(date +%s)-1</unique-id>#" "$_home/.config/Thunar/uca.xml"
+        [ -n "$_owner" ] && chown -R "$_owner" "$_home/.config" "$_home/.themes" "$_home/.local" \
+                                              "$_home/Pictures" "$_home/start-desktop.sh" 2>/dev/null || true
+        echo "seeded bspwm theme into $_home"
+    fi
+}
+
+# Run the desktop as a non-root user when DESKTOP_USER is set and not root.
+DESKTOP_USER="${DESKTOP_USER:-}"
+if [ -n "$DESKTOP_USER" ] && [ "$DESKTOP_USER" != "root" ]; then
+    if ! USER_UID=$(id -u "$DESKTOP_USER" 2>/dev/null); then
+        echo "Error: DESKTOP_USER '$DESKTOP_USER' does not exist" >&2
+        exit 1
+    fi
+    USER_GID=$(id -g "$DESKTOP_USER")
+    USER_HOME=$(getent passwd "$DESKTOP_USER" | cut -d: -f6)
+    OWNER="$USER_UID:$USER_GID"
+    TARGET_XDG="/run/user/$USER_UID"
+
+    mkdir -p "$TARGET_XDG"; chown "$OWNER" "$TARGET_XDG"; chmod 700 "$TARGET_XDG"
+    safe_chown "$OWNER" "$X11_SOCKET"
+    safe_chown "$OWNER" "$X11_LOCK"
+    [ "$PULSE_ENABLED" -eq 1 ] && safe_chown "$OWNER" /tmp/.pulse-socket
+    [ "$VIRGL_ENABLED" -eq 1 ] && safe_chown "$OWNER" /tmp/.virgl_test
+
+    seed_theme "$USER_HOME" "$OWNER"
+
+    SAFE_ENV=$(env | awk -F= '{print $1}' \
+        | grep -E '^[a-zA-Z_][a-zA-Z0-9_]*$' \
+        | grep -vE '^(HOME|USER|LOGNAME|PWD|SHELL|XDG_RUNTIME_DIR|MAIL|SHLVL|_)$' \
+        | tr '\n' ',' | sed 's/,$//')
+
+    if { su --help 2>&1 || true; } | grep -Eq -- '(^|[[:space:]])(-w|--whitelist-environment)([[:space:]]|,|$)'; then
+        [ -n "$SAFE_ENV" ] && WL="-w $SAFE_ENV" || WL=""
+        exec su $WL "$DESKTOP_USER" -c \
+            "export XDG_RUNTIME_DIR='$TARGET_XDG'; exec /usr/local/bin/bspwm-session"
+    fi
+
+    EXPORTS="export XDG_RUNTIME_DIR='$TARGET_XDG';"
+    OLD_IFS=$IFS; IFS=,
+    for var in ${SAFE_ENV:-}; do
+        [ -z "$var" ] && continue
+        val=$(printenv "$var" || true)
+        esc=$(printf '%s' "$val" | sed "s/'/'\\\\''/g")
+        EXPORTS="$EXPORTS export $var='$esc';"
+    done
+    IFS=$OLD_IFS
+    exec su "$DESKTOP_USER" -c "$EXPORTS exec /usr/local/bin/bspwm-session"
+fi
+
+# Default: run the desktop as root.
+seed_theme /root ""
+mkdir -p /run/user/0; chmod 700 /run/user/0
+export XDG_RUNTIME_DIR=/run/user/0
+export HOME=/root USER=root
+exec /usr/local/bin/bspwm-session

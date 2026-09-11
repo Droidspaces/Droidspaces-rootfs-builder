@@ -1,0 +1,13 @@
+clock_format = %H:%M
+close_on_unfocus = 0
+show_calendar = 1
+show_timezones = 0
+mark_today = 1
+show_week_numbers = 0
+force_lang = en_US.utf8
+mainwindow_decorations = 0
+mainwindow_resizable = 0
+mainwindow_position = center
+mainwindow_keep_above = 1
+mainwindow_sticky = 1
+mainwindow_skip_taskbar = 1
