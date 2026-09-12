@@ -221,6 +221,16 @@ RUN set -eu; \
 # Android / Droidspaces container compatibility fixes.
 # ============================================================
 
+# Let a non-root desktop user power the container off from the bspwm power menu.
+# Scoped to exactly those two commands - not blanket sudo - and to the %sudo group,
+# which is empty until an admin adds someone, so this grants nothing on its own.
+# Without it the power menu prompts for a password and then fails, because
+# `usermod -aG sudo <user>` alone does not grant sudo.
+RUN printf '%%sudo ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff, /usr/bin/systemctl reboot\n' \
+      > /etc/sudoers.d/10-droidspaces-power && \
+    chmod 440 /etc/sudoers.d/10-droidspaces-power && \
+    visudo -c -f /etc/sudoers.d/10-droidspaces-power
+
 # Configure iptables-legacy (Required for Android compatibility)
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
     update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy

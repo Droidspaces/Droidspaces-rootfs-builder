@@ -11,9 +11,12 @@ run_root() {
     "$@"; [ "${POWER_DRY_RUN:-0}" = 1 ] && notify-send "Power (dry run)" "$*"
     return
   fi
-  # Passwordless sudo (NOPASSWD): try non-interactively before asking for anything.
-  if sudo -n true 2>/dev/null; then
-    sudo "$@"; [ "${POWER_DRY_RUN:-0}" = 1 ] && notify-send "Power (dry run)" "$*"
+  # Probe this exact command rather than sudo in general. The templates ship a NOPASSWD
+  # rule scoped to poweroff/reboot only; `sudo -n true` cannot see that and would make a
+  # touch desktop demand a typed password for a command that needs none. `sudo -l CMD`
+  # answers "may I run this" without running it.
+  if sudo -n -l "$@" >/dev/null 2>&1; then
+    sudo -n "$@"; [ "${POWER_DRY_RUN:-0}" = 1 ] && notify-send "Power (dry run)" "$*"
     return
   fi
   pw=$(printf '' | rofi -dmenu -password -p "Password for $(id -un)" -theme "$HOME/.config/rofi/prompt.rasi"); rc=$?
