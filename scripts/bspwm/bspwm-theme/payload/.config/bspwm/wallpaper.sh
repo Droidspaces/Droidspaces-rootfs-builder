@@ -14,6 +14,6 @@ fi
 choice=$(
   find "$dir" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | sort |
   while IFS= read -r f; do printf '%s\000icon\037%s\n' "${f#"$dir"/}" "$f"; done |
-  rofi -dmenu -i -p "Wallpaper" -show-icons -theme "$HOME/.config/rofi/wallpaper.rasi"
+  rofi -dmenu -sync -i -p "Wallpaper" -show-icons -theme "$HOME/.config/rofi/wallpaper.rasi"
 ) || exit 0
 [ -n "$choice" ] && "$0" set "$dir/$choice"

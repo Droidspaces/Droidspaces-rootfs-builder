@@ -3,7 +3,7 @@
 # POWER_DRY_RUN=1 makes systemctl only print what it would do (used by tests).
 theme="$HOME/.config/rofi/powermenu.rasi"
 choice=$(printf '%s\n' "  Power off" "  Restart" "  Cancel" \
-  | rofi -dmenu -i -p "" -theme "$theme") || exit 0
+  | rofi -dmenu -sync -i -p "" -theme "$theme") || exit 0
 run_root() {
   [ "${POWER_DRY_RUN:-0}" = 1 ] && set -- "$@" --dry-run
   # Already root (the default DESKTOP_USER): no sudo, no password, ever.
