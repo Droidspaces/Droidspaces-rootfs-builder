@@ -21,6 +21,25 @@ else
   g=$UI_GAP; [ "$g" -lt 10 ] && g=10; m=$((g - UI_BORDER)); [ "$m" -lt 6 ] && m=6
   export UI_BAR_WIDTH="100%:-$((2 * g))px" UI_BAR_OFFSET_X="$m" UI_BAR_OFFSET_Y="$m" UI_BAR_RADIUS=18 UI_BAR_MARGIN="$g"
 fi
+# Top-bar distro logo (Nerd Font "Linux Logos" block, shipped with the theme). ID_LIKE is
+# tried after ID so derivatives fall in the right place for free: archarm/artix -> arch,
+# kali -> its own dragon. Anything unrecognised gets Tux rather than a wrong distro's mark.
+# Sourced in a subshell so os-release's NAME/VERSION/... do not leak into the session.
+for _id in $(. /etc/os-release 2>/dev/null; echo "$ID $ID_LIKE"); do
+  case "$_id" in
+    ubuntu)  UI_LOGO=""; UI_LOGO_FG="#fab387"; break ;;
+    kali)    UI_LOGO=""; UI_LOGO_FG="#89b4fa"; break ;;
+    debian)  UI_LOGO=""; UI_LOGO_FG="#f38ba8"; break ;;
+    arch)    UI_LOGO=""; UI_LOGO_FG="#89dceb"; break ;;
+    alpine)  UI_LOGO=""; UI_LOGO_FG="#89b4fa"; break ;;
+    fedora)  UI_LOGO=""; UI_LOGO_FG="#89b4fa"; break ;;
+  esac
+done
+export UI_LOGO="${UI_LOGO:-}" UI_LOGO_FG="${UI_LOGO_FG:-#cdd6f4}"
+# polybar fakes transparency by copying the root pixmap, and gets it wrong outside the bars'
+# rounded corners - the bottom dock ends up with a grey wedge in each corner. Only turn it on
+# when no compositor is running to do it properly; without either, the corners render black.
+if [ "$(cfg_get COMPOSITOR on)" = on ]; then export UI_PSEUDO_TRANS=false; else export UI_PSEUDO_TRANS=true; fi
 case "$(cfg_get DOCK full)" in
   compact) export UI_DOCK_LEFT="apps terminal files windows" UI_DOCK_CENTER="sep winmenu layout float fullscreen sep" UI_DOCK_RIGHT="send close" ;;
   *)       export UI_DOCK_LEFT="apps terminal files windows" UI_DOCK_CENTER="sep swap-prev swap-next shrink grow sep rotate balance layout sep float fullscreen send sep" UI_DOCK_RIGHT="close" ;;

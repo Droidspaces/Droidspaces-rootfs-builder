@@ -57,9 +57,10 @@ system() { while :; do
     *"System info")   "$B/sysinfo.sh" ;;
     *Screenshot)      "$B/screenshot.sh" ;;
     *"Task manager")  term "htop || top" ;;
-    *Update*)         term "sudo apt update && sudo apt upgrade; echo; echo Done. Press Enter.; read x" ;;
+    *Update*)         command -v pacman >/dev/null && u="sudo pacman -Syu" || u="sudo apt update && sudo apt upgrade"
+                      term "$u; echo; echo Done. Press Enter.; read x" ;;
     *Notifications*)  cfg_set NOTIFY "$([ "$(cfg_get NOTIFY on)" = on ] && echo off || echo on)"; apply ;;
-    *Compositor*)     cfg_set COMPOSITOR "$([ "$(cfg_get COMPOSITOR on)" = on ] && echo off || echo on)"; apply ;;
+    *Compositor*)     cfg_set COMPOSITOR "$([ "$(cfg_get COMPOSITOR on)" = on ] && echo off || echo on)"; apply; bars ;;
     *"Kill a window") notify "Kill a window" "Tap the window to force-close"; xkill >/dev/null 2>&1 & ;;
     *"Edit bspwm"*)   term "\${EDITOR:-micro} $B/bspwmrc" ;;
     *"Edit bar"*)     term "\${EDITOR:-micro} $HOME/.config/polybar/config.ini" ;;

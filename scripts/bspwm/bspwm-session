@@ -18,4 +18,9 @@ if ! xdpyinfo >/dev/null 2>&1; then
     echo "No X server on $DISPLAY after handoff" >&2
     exit 1
 fi
-exec dbus-launch --exit-with-session bspwm
+# dbus-run-session, not dbus-launch: dbus-launch's --exit-with-session babysitter tears the
+# bus down immediately on Termux:X11 (it cannot hold a connection to the unauthenticated
+# display), leaving DBUS_SESSION_BUS_ADDRESS pointing at a socket that never existed. That
+# breaks dunst notifications, and on Xfce 4.20 xfce4-terminal (which reads its settings from
+# xfconf over the session bus) falls back to an unthemed black window with a menubar.
+exec dbus-run-session -- bspwm

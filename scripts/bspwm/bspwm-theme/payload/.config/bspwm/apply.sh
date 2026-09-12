@@ -77,7 +77,12 @@ vsync = false;
 # the glx backend or picom 12+ handle this correctly). Rofi/polybar/dunst
 # still look rounded because they paint their own ARGB shape via cairo.
 corner-radius = 0;
-use-damage = true;
+# use-damage stays off: with the xrender backend picom's damage tracking goes stale when
+# Termux:X11 resizes the screen (soft keyboard), leaving everything below the old height
+# uncomposited - a window keeps its border but paints only its top part, wallpaper showing
+# through below. Full repaints cost a little CPU; picom still only draws when something
+# changes, so the practical cost is repainting the whole screen instead of a sub-region.
+use-damage = false;
 unredir-if-possible = false;
 detect-client-opacity = true;
 detect-rounded-corners = true;
