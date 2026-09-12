@@ -120,8 +120,8 @@ RUN pacman -Syu --noconfirm && \
     gtk3 \
     gtk-update-icon-cache \
     librsvg \
-    # Fonts (Symbols Nerd Font ships inside the theme, not via pacman)
-    inter-font \
+    # Fonts (Inter and Symbols Nerd Font ship inside the theme, not via pacman -
+    # Inter has no package at all on Artix, so bundling keeps the three templates identical)
     noto-fonts \
     noto-fonts-emoji \
     ttf-jetbrains-mono \

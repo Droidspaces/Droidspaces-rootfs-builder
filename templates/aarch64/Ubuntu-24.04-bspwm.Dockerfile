@@ -123,11 +123,10 @@ RUN apt-get update && \
     # GTK theme engines and SVG/GTK helpers
     librsvg2-common \
     libgtk-3-bin \
-    # Fonts (Symbols Nerd Font ships inside the theme, not via apt)
+    # Fonts (Inter and Symbols Nerd Font ship inside the theme, not via apt)
     fonts-noto-core \
     fonts-noto-ui-core \
     fonts-noto-color-emoji \
-    fonts-inter \
     fonts-jetbrains-mono \
     # X utilities, clipboard, notifications
     x11-xserver-utils \
