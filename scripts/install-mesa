@@ -24,7 +24,7 @@ case "${ID}:${VERSION_CODENAME}" in
     ubuntu:noble)   DISTRO_TAG="ubuntu_noble" ;;
     debian:trixie)  DISTRO_TAG="debian_trixie" ;;
     kali:*|kali:kali-rolling) DISTRO_TAG="debian_trixie" ;;
-    arch:*|archarm:*) DISTRO_TAG="archlinux" ;;
+    arch:*|archarm:*|artix:*) DISTRO_TAG="archlinux" ;;
     *)
         echo "Error: Unsupported OS: ${PRETTY_NAME:-${ID}}"
         echo "Only Ubuntu 24.04 (noble), Debian 13 (trixie), Kali Linux (rolling) and Arch Linux are supported."

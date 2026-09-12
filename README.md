@@ -68,11 +68,12 @@ runs as root and drops to a **desktop user** before launching the session.
 
 - XFCE templates read **`XFCE_USER`** from `/run/droidspaces.env` (written by the host app).
 - bspwm templates read **`DESKTOP_USER`** the same way. Default (unset or `root`) runs
-  the desktop as root. On `Arch-bspwm-Kernel-5.10-and-up` a non-root `DESKTOP_USER` must be
-  added to `aid_inet,aid_net_raw,input,video,tty` by hand - Arch's `useradd` has no
+  the desktop as root. On the Arch and Artix templates a non-root `DESKTOP_USER` must be
+  added to `aid_inet,aid_net_raw,input,video,tty` by hand - `useradd` has no
   supplementary-group default to hook, unlike Debian's `adduser.conf`.
 
-The bspwm templates (`Ubuntu-24.04-bspwm`, `Arch-bspwm-Kernel-5.10-and-up`) are XFCE's package
+The bspwm templates (`Ubuntu-24.04-bspwm`, `Arch-bspwm-Kernel-5.10-and-up`,
+`Artix-bspwm-OpenRC`) are XFCE's package
 set with the desktop swapped for the bspwm tiling WM plus a touch-friendly Catppuccin theme
 (polybar bar + dock, rofi menus, PulseAudio Volume Control, dynamic desktops, drag-to-resize,
 a settings hub). The theme lives in
@@ -80,3 +81,10 @@ a settings hub). The theme lives in
 read-only master at `/usr/share/droidspaces/bspwm-theme`, a build-time copy into `/root` and
 `/etc/skel`, and a runtime seed in `bspwm-start` for any user created without skel. The same
 `scripts/bspwm/bspwm-theme` payload is published as a standalone importer for raw bspwm installs.
+
+The theme itself is init- and distro-agnostic: it picks `pacman` or `apt`, reads the top-bar
+logo from `os-release`, bundles its own fonts, and uses `poweroff`/`reboot` where there is no
+`systemctl`. Only the autostart glue differs per template - a systemd unit on Ubuntu/Arch, an
+OpenRC service driving `supervise-daemon` on Artix. Two packages have no Armtix equivalent, so
+`Artix-bspwm-OpenRC` ships without the tap-the-clock calendar (`gsimplecal`) and without the
+alternate cursor themes (`xcursor-themes`); the default Adwaita cursor is present.

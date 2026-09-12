@@ -25,7 +25,13 @@ run_root() {
     *) notify-send -u critical "Power" "Failed: ${err:-unknown error}" ;;
   esac
 }
+# systemd has systemctl; OpenRC (Artix) has plain poweroff/reboot from the openrc package.
+if command -v systemctl >/dev/null 2>&1; then
+  off="systemctl poweroff"; restart="systemctl reboot"
+else
+  off="poweroff"; restart="reboot"
+fi
 case "$choice" in
-  *"Power off")       run_root systemctl poweroff ;;
-  *"Restart")         run_root systemctl reboot ;;
+  *"Power off")       run_root $off ;;
+  *"Restart")         run_root $restart ;;
 esac

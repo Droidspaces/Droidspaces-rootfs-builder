@@ -30,7 +30,7 @@ for _id in $(. /etc/os-release 2>/dev/null; echo "$ID $ID_LIKE"); do
     ubuntu)  UI_LOGO=""; UI_LOGO_FG="#fab387"; break ;;
     kali)    UI_LOGO=""; UI_LOGO_FG="#89b4fa"; break ;;
     debian)  UI_LOGO=""; UI_LOGO_FG="#f38ba8"; break ;;
-    arch)    UI_LOGO=""; UI_LOGO_FG="#89dceb"; break ;;
+    arch|artix) UI_LOGO=""; UI_LOGO_FG="#89dceb"; break ;;
     alpine)  UI_LOGO=""; UI_LOGO_FG="#89b4fa"; break ;;
     fedora)  UI_LOGO=""; UI_LOGO_FG="#89b4fa"; break ;;
   esac
