@@ -19,13 +19,15 @@ fi
 
 . /etc/os-release
 
+# Arch has no VERSION_CODENAME, so the subject reads "archarm:" there.
 case "${ID}:${VERSION_CODENAME}" in
     ubuntu:noble)   DISTRO_TAG="ubuntu_noble" ;;
     debian:trixie)  DISTRO_TAG="debian_trixie" ;;
     kali:*|kali:kali-rolling) DISTRO_TAG="debian_trixie" ;;
+    arch:*|archarm:*) DISTRO_TAG="archlinux" ;;
     *)
         echo "Error: Unsupported OS: ${PRETTY_NAME:-${ID}}"
-        echo "Only Ubuntu 24.04 (noble), Debian 13 (trixie), and Kali Linux (rolling) are supported."
+        echo "Only Ubuntu 24.04 (noble), Debian 13 (trixie), Kali Linux (rolling) and Arch Linux are supported."
         exit 1
         ;;
 esac
@@ -40,13 +42,30 @@ case "$(uname -m)" in
 esac
 
 MESA_PACKAGES="libgl1-mesa-dri libglx-mesa0 libegl-mesa0 mesa-vulkan-drivers mesa-utils libgbm1"
+# Arch: the release replaces the repo's mesa outright, so only the bits it does not
+# ship are pulled from the repos. ARCH_HOLD is every package name inside the archive.
+ARCH_PACKAGES="python mesa-utils vulkan-icd-loader vulkan-tools"
+ARCH_HOLD="mesa mesa-docs vulkan-freedreno vulkan-mesa-layers vulkan-mesa-implicit-layers"
+
+# Add a setting to the FIRST [options] section of pacman.conf - the Arch Linux ARM
+# image carries two - unless that key is already set there.
+pacman_conf_add() { # pacman_conf_add KEY VALUE
+    grep -q "^$1 *=" /etc/pacman.conf && return 0
+    sed -i "0,/^\\[options\\]/s//&\n$1 = $2/" /etc/pacman.conf
+}
 
 echo "Detected: ${PRETTY_NAME} (${ARCH_TAG})"
 
-# Install system mesa packages first so dependencies are always satisfied
-echo "Installing system mesa packages..."
-apt-get update
-apt-get install -y --no-install-recommends python3 $MESA_PACKAGES
+# Install the system packages first so dependencies are always satisfied
+if [ "$DISTRO_TAG" = archlinux ]; then
+    echo "Syncing pacman databases..."
+    pacman -Sy --noconfirm
+    pacman -S --noconfirm --needed $ARCH_PACKAGES
+else
+    echo "Installing system mesa packages..."
+    apt-get update
+    apt-get install -y --no-install-recommends python3 $MESA_PACKAGES
+fi
 
 echo "Fetching latest release info from ${REPO}..."
 
@@ -86,22 +105,39 @@ trap 'rm -rf "$TMPDIR"' EXIT
 echo "Downloading..."
 curl -fL --progress-bar -o "${TMPDIR}/${FILENAME}" "$DOWNLOAD_URL"
 
-echo "Extracting to /..."
-case "$FILENAME" in
-    *.tar.gz) tar -zxf "${TMPDIR}/${FILENAME}" -C / ;;
-    *.tar)    tar -xf  "${TMPDIR}/${FILENAME}" -C / ;;
-    *)
-        echo "Error: Unknown archive format: ${FILENAME}"
-        exit 1
-        ;;
-esac
+if [ "$DISTRO_TAG" = archlinux ]; then
+    # The archlinux asset is an archive of makepkg packages, not a rootfs overlay.
+    # They carry no signature, and pacman.conf leaves LocalFileSigLevel commented out
+    # so it inherits "Required" from SigLevel. Relax it for local files only - packages
+    # coming from the repos still need a valid signature.
+    echo "Installing packages with pacman..."
+    pacman_conf_add LocalFileSigLevel Optional
+    mkdir -p "${TMPDIR}/pkgs"
+    tar -xf "${TMPDIR}/${FILENAME}" -C "${TMPDIR}/pkgs"
+    pacman -U --noconfirm "${TMPDIR}"/pkgs/*.pkg.tar.xz
+else
+    echo "Extracting to /..."
+    case "$FILENAME" in
+        *.tar.gz) tar -zxf "${TMPDIR}/${FILENAME}" -C / ;;
+        *.tar)    tar -xf  "${TMPDIR}/${FILENAME}" -C / ;;
+        *)
+            echo "Error: Unknown archive format: ${FILENAME}"
+            exit 1
+            ;;
+    esac
+fi
 
 echo "Running ldconfig..."
 ldconfig
 
-# Hold system mesa packages so apt won't upgrade/reinstall and overwrite custom files
-# (packages stay installed so dependencies remain satisfied)
-echo "Holding system mesa packages in APT..."
-apt-mark hold $MESA_PACKAGES
+# Hold the mesa packages so a later upgrade cannot overwrite the custom drivers
+if [ "$DISTRO_TAG" = archlinux ]; then
+    echo "Holding mesa packages in pacman (IgnorePkg)..."
+    pacman_conf_add IgnorePkg "$ARCH_HOLD"
+else
+    # Packages stay installed so dependencies remain satisfied.
+    echo "Holding system mesa packages in APT..."
+    apt-mark hold $MESA_PACKAGES
+fi
 
 echo "Done. Mesa installed successfully."

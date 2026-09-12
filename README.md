@@ -62,17 +62,20 @@ current latest release without building.
 
 ## Desktop templates and the desktop user
 
-GUI templates (`*-XFCE`, `Ubuntu-24.04-bspwm`) ship a systemd service that autostarts the
+GUI templates (`*-XFCE`, `*-bspwm`) ship a systemd service that autostarts the
 desktop on the Termux:X11 display once the container reaches `graphical.target`. The service
 runs as root and drops to a **desktop user** before launching the session.
 
 - XFCE templates read **`XFCE_USER`** from `/run/droidspaces.env` (written by the host app).
-- `Ubuntu-24.04-bspwm` reads **`DESKTOP_USER`** the same way. Default (unset or `root`) runs
-  the desktop as root.
+- bspwm templates read **`DESKTOP_USER`** the same way. Default (unset or `root`) runs
+  the desktop as root. On `Arch-bspwm-Kernel-5.10-and-up` a non-root `DESKTOP_USER` must be
+  added to `aid_inet,aid_net_raw,input,video,tty` by hand - Arch's `useradd` has no
+  supplementary-group default to hook, unlike Debian's `adduser.conf`.
 
-`Ubuntu-24.04-bspwm` is XFCE's package set with the desktop swapped for the bspwm tiling WM
-plus a touch-friendly Catppuccin theme (polybar bar + dock, rofi menus, PulseAudio Volume Control,
-dynamic desktops, drag-to-resize, a settings hub). The theme lives in
+The bspwm templates (`Ubuntu-24.04-bspwm`, `Arch-bspwm-Kernel-5.10-and-up`) are XFCE's package
+set with the desktop swapped for the bspwm tiling WM plus a touch-friendly Catppuccin theme
+(polybar bar + dock, rofi menus, PulseAudio Volume Control, dynamic desktops, drag-to-resize,
+a settings hub). The theme lives in
 `scripts/bspwm/bspwm-theme/` and is seeded three ways so **every** user gets it by default: a
 read-only master at `/usr/share/droidspaces/bspwm-theme`, a build-time copy into `/root` and
 `/etc/skel`, and a runtime seed in `bspwm-start` for any user created without skel. The same
