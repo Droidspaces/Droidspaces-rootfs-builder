@@ -74,6 +74,13 @@ seed_theme() {
         chmod -x "$_home"/.config/bspwm/autostart.d/* 2>/dev/null || true
         [ -f "$_home/.config/Thunar/uca.xml" ] && \
             sed -i "s#<unique-id>PLACEHOLDER</unique-id>#<unique-id>$(date +%s)-1</unique-id>#" "$_home/.config/Thunar/uca.xml"
+        # The home directory itself, not just what was seeded into it: `useradd` without
+        # -m leaves no home at all, so the mkdir above creates it as root. The user then
+        # cannot write to their own home, rofi cannot create ~/.cache, and every menu
+        # (app list, settings, power, wallpaper) silently fails to open while the bar and
+        # dock still come up. Non-recursive on purpose - an existing home may hold files
+        # that are deliberately not the desktop user's.
+        [ -n "$_owner" ] && chown "$_owner" "$_home" 2>/dev/null || true
         [ -n "$_owner" ] && chown -R "$_owner" "$_home/.config" "$_home/.themes" "$_home/.local" \
                                               "$_home/Pictures" "$_home/start-desktop.sh" 2>/dev/null || true
         echo "seeded bspwm theme into $_home"
