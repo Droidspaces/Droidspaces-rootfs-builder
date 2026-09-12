@@ -62,15 +62,47 @@ current latest release without building.
 
 ## Desktop templates and the desktop user
 
-GUI templates (`*-XFCE`, `*-bspwm`) ship a systemd service that autostarts the
-desktop on the Termux:X11 display once the container reaches `graphical.target`. The service
-runs as root and drops to a **desktop user** before launching the session.
+GUI templates (`*-XFCE`, `*-bspwm`) autostart the desktop on the Termux:X11 display and run it
+as **root** unless you name a desktop user. XFCE templates read `XFCE_USER`; bspwm templates
+read `DESKTOP_USER`. Both come from `/run/droidspaces.env`, which the host app writes at start
+(CLI: pass an env file with `droidspaces --env=PATH`).
 
-- XFCE templates read **`XFCE_USER`** from `/run/droidspaces.env` (written by the host app).
-- bspwm templates read **`DESKTOP_USER`** the same way. Default (unset or `root`) runs
-  the desktop as root. On the Arch and Artix templates a non-root `DESKTOP_USER` must be
-  added to `aid_inet,aid_net_raw,input,video,tty` by hand - `useradd` has no
-  supplementary-group default to hook, unlike Debian's `adduser.conf`.
+### Creating the desktop user
+
+Run these **inside the container**, as root.
+
+Debian / Ubuntu / Kali:
+
+```sh
+adduser alice                     # home, groups and password in one step
+usermod -aG sudo alice            # optional: sudo
+```
+
+Arch / Artix - `useradd` creates nothing by default, so pass all of it:
+
+```sh
+useradd -m -G wheel,aid_inet,aid_net_raw,input,video,tty alice
+passwd alice
+```
+
+`-m` creates the home, `aid_inet,aid_net_raw` give network access on Android kernels, and
+`input,video,tty` give hardware access. Skipping `-G` leaves the user with no network.
+
+Optional, for `sudo pacman -Syu` from Settings > Update packages (Power off and Restart
+already work without it):
+
+```sh
+echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/11-wheel && chmod 440 /etc/sudoers.d/11-wheel
+```
+
+### Pointing the desktop at it
+
+Set the variable in the host app's environment settings, then restart the container:
+
+```sh
+DESKTOP_USER=alice                # bspwm templates
+XFCE_USER=alice                   # XFCE templates
+```
 
 The bspwm templates (`Ubuntu-24.04-bspwm`, `Arch-bspwm-Kernel-5.10-and-up`,
 `Artix-bspwm-OpenRC`) are XFCE's package
