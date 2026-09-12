@@ -73,6 +73,8 @@ RUN pacman -Syu --noconfirm && \
     python-pip \
     python-xlib \
     python-gobject \
+    # avahi-discover is a Python/D-Bus app; without this it exits on "No module named dbus"
+    python-dbus \
     # Audio (libpulse ships pactl; the daemon lives on the Android side)
     libpulse \
     pavucontrol \
@@ -282,6 +284,18 @@ for service in dbus.service systemd-udevd.service systemd-resolved.service syste
         ln -sf "$GUEST_SYSTEMD_PATH/$service" "/etc/systemd/system/multi-user.target.wants/$service"
     fi
 done
+
+# Enable Avahi (mDNS/DNS-SD) so the Zeroconf browsers in the app menu work.
+# Mirrors `systemctl enable avahi-daemon.service`, whose [Install] is
+# WantedBy=multi-user.target, Also=avahi-daemon.socket, Alias=dbus-org.freedesktop.Avahi.service.
+# It only discovers anything when the container shares the host network; under the
+# default net_mode=nat, multicast never leaves the bridge and the browsers stay empty.
+if [ -f "$GUEST_SYSTEMD_PATH/avahi-daemon.service" ]; then
+    mkdir -p /etc/systemd/system/sockets.target.wants
+    ln -sf "$GUEST_SYSTEMD_PATH/avahi-daemon.service" /etc/systemd/system/multi-user.target.wants/avahi-daemon.service
+    ln -sf "$GUEST_SYSTEMD_PATH/avahi-daemon.socket"  /etc/systemd/system/sockets.target.wants/avahi-daemon.socket
+    ln -sf "$GUEST_SYSTEMD_PATH/avahi-daemon.service" /etc/systemd/system/dbus-org.freedesktop.Avahi.service
+fi
 
 # Disable power button handling in systemd-logind
 mkdir -p /etc/systemd/logind.conf.d
