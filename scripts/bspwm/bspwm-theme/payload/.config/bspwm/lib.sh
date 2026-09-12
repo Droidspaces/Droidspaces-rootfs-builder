@@ -1,11 +1,18 @@
 # Shared helpers for the touch desktop. Source this; do not run it.
 CFG="$HOME/.config/bspwm/settings.conf"
 cfg_get() { # cfg_get KEY DEFAULT
-  v=$(grep -s "^$1=" "$CFG" | tail -1 | cut -d= -f2-)
+  # Pure shell, no forks: a menu builds a dozen of these and grep|tail|cut cost ~13ms each,
+  # which is long enough for rofi to paint an empty list before the rows arrive.
+  v=""
+  if [ -f "$CFG" ]; then
+    while IFS= read -r _l || [ -n "$_l" ]; do
+      case "$_l" in "$1="*) v=${_l#*=} ;; esac
+    done < "$CFG"
+  fi
   [ -n "$v" ] && { printf '%s\n' "$v"; return; }
   case "$1" in   # legacy single-value files from earlier versions
-    SCALE) v=$(cat "$HOME/.config/bspwm/scale" 2>/dev/null) ;;
-    FOCUS) v=$(cat "$HOME/.config/bspwm/focus" 2>/dev/null) ;;
+    SCALE) [ -f "$HOME/.config/bspwm/scale" ] && read -r v < "$HOME/.config/bspwm/scale" ;;
+    FOCUS) [ -f "$HOME/.config/bspwm/focus" ] && read -r v < "$HOME/.config/bspwm/focus" ;;
   esac
   printf '%s\n' "${v:-$2}"
 }
@@ -23,8 +30,10 @@ accent_hex() { # accent_hex NAME
 # menu PROMPT MESG ACTIVE_INDEX  (menu lines on stdin; prints the chosen line; fails on cancel)
 menu() {
   p="$1"; m="$2"; a="$3"
-  if [ -n "$a" ]; then rofi -dmenu -i -p "$p" ${m:+-mesg "$m"} -a "$a" -theme "$HOME/.config/rofi/settings.rasi"
-  else rofi -dmenu -i -p "$p" ${m:+-mesg "$m"} -theme "$HOME/.config/rofi/settings.rasi"; fi
+  # -sync: read all of stdin before mapping the window. Without it rofi paints an empty
+  # list first and the rows pop in a moment later, which reads as a glitch.
+  if [ -n "$a" ]; then rofi -dmenu -sync -i -p "$p" ${m:+-mesg "$m"} -a "$a" -theme "$HOME/.config/rofi/settings.rasi"
+  else rofi -dmenu -sync -i -p "$p" ${m:+-mesg "$m"} -theme "$HOME/.config/rofi/settings.rasi"; fi
 }
 # pick PROMPT CURRENT "opt1 opt2 ..."  -> prints chosen option (current row highlighted)
 pick() {
