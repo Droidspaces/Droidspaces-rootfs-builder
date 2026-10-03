@@ -8,7 +8,7 @@
 FROM alpine:latest AS bootstrap
 RUN apk add --no-cache curl xz
 WORKDIR /rootfs
-RUN curl -fsSL https://armtixlinux.org/images/armtix-openrc-20260124.tar.xz | xz -d | tar x && \
+RUN curl -fsSL https://armtixlinux.org/images/armtix-openrc-20260921.tar.xz | xz -d | tar x && \
     ln -sf usr/bin bin && \
     ln -sf usr/lib lib && \
     ln -sf usr/lib64 lib64 2>/dev/null || true && \
