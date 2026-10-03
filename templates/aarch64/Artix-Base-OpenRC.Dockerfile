@@ -22,7 +22,9 @@ FROM base AS customizer
 # Initialize pacman keyring and install the full development rootfs.
 # NetworkManager is enabled through a DroidSpaces wrapper below so it only runs
 # for NAT/gateway containers and cannot disturb Android host networking.
-RUN pacman-key --init && \
+# CheckSpace trips on BuildKit's read-only /etc/hosts and /etc/resolv.conf mounts
+RUN sed -i 's/^CheckSpace/#CheckSpace/' /etc/pacman.conf && \
+    pacman-key --init && \
     pacman --disable-sandbox -Rdd --noconfirm linux-aarch64 linux-aarch64-lts linux-aarch64-headers linux-aarch64-lts-headers mkinitcpio mkinitcpio-busybox linux-firmware linux-firmware-whence linux-firmware-amdgpu linux-firmware-atheros linux-firmware-broadcom linux-firmware-cirrus linux-firmware-intel linux-firmware-mediatek linux-firmware-nvidia linux-firmware-other linux-firmware-radeon linux-firmware-realtek 2>/dev/null || true && \
     pacman-key --populate artix && \
     pacman --disable-sandbox -Syu --noconfirm --ignore linux-aarch64,linux-aarch64-lts,linux-aarch64-headers,linux-aarch64-lts-headers,linux-firmware,linux-firmware-whence,mkinitcpio && \
