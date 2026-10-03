@@ -45,7 +45,35 @@ config interface 'loopback'
 config interface 'wan'
 	option device 'eth0'
 	option proto 'dhcp'
+
+# IPv6 upstream. Droidspaces NAT sends router advertisements on eth0, so this
+# comes up by SLAAC. sourcefilter 0: netifd otherwise installs "default from
+# <prefix>" routes, which need CONFIG_IPV6_SUBTREES, and Android kernels do not
+# have it. The route silently fails to install and IPv6 never leaves the router.
+config interface 'wan6'
+	option device 'eth0'
+	option proto 'dhcpv6'
+	option reqaddress 'try'
+	option reqprefix 'auto'
+	option sourcefilter '0'
 NETEOF
+
+# Upstream hands us one address and no delegated prefix, so LAN interfaces are
+# numbered from our own ULA (option ip6assign on the interface) and NAT66'd out
+# of eth0. The prefix is random per install, generated on first boot.
+cat > /etc/uci-defaults/90-droidspaces-ula <<'ULAEOF'
+uci -q get network.globals.ula_prefix >/dev/null && exit 0
+r=$(hexdump -n 5 -e '5/1 "%02x"' /dev/urandom)
+uci set network.globals=globals
+uci set network.globals.ula_prefix="fd$(echo "$r" | cut -c1-2):$(echo "$r" | cut -c3-6):$(echo "$r" | cut -c7-10)::/48"
+uci commit network
+ULAEOF
+
+# fw3 has no masq6. This include puts the NAT66 rule in and survives reloads.
+cat > /etc/firewall.nat6 <<'NAT6EOF'
+ip6tables -t nat -C POSTROUTING -o eth0 -j MASQUERADE 2>/dev/null ||
+	ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+NAT6EOF
 
 # fw3 zones: vaplan lives in an isolated 'guest' zone (NOT lan) so hotspot
 # clients reach only the internet (guest -> masqueraded wan/eth0) and never
@@ -74,6 +102,7 @@ config zone
 config zone
 	option name 'wan'
 	list network 'wan'
+	list network 'wan6'
 	option input 'REJECT'
 	option output 'ACCEPT'
 	option forward 'REJECT'
@@ -134,6 +163,39 @@ config rule
 	option proto 'tcp'
 	option dest_port '80 443'
 	option target 'ACCEPT'
+
+# IPv6 cannot work without neighbour discovery and router advertisements, and
+# every zone here rejects input. src '*' covers the wan (our own RA from
+# Droidspaces) and any LAN zone (clients soliciting this router).
+config rule
+	option name 'Allow-ICMPv6-Input'
+	option src '*'
+	option proto 'icmp'
+	list icmp_type 'echo-request'
+	list icmp_type 'echo-reply'
+	list icmp_type 'destination-unreachable'
+	list icmp_type 'packet-too-big'
+	list icmp_type 'time-exceeded'
+	list icmp_type 'bad-header'
+	list icmp_type 'unknown-header-type'
+	list icmp_type 'router-solicitation'
+	list icmp_type 'neighbour-solicitation'
+	list icmp_type 'router-advertisement'
+	list icmp_type 'neighbour-advertisement'
+	option family 'ipv6'
+	option target 'ACCEPT'
+
+config rule
+	option name 'Allow-DHCPv6'
+	option src '*'
+	option proto 'udp'
+	option dest_port '546 547'
+	option family 'ipv6'
+	option target 'ACCEPT'
+
+config include 'nat6'
+	option path '/etc/firewall.nat6'
+	option reload '1'
 FWEOF
 
 echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/30-virtualap.conf
