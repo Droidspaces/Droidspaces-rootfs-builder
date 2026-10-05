@@ -199,6 +199,13 @@ config include 'nat6'
 FWEOF
 
 echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/30-virtualap.conf
+
+# debugfs has one superblock for the whole machine. Mounting it here without a
+# mode option resets the host's /sys/kernel/debug to 0700, and Android's
+# webview_zygote then dies on its next fork: Chrome and WebView stay broken
+# until the phone reboots. Nothing in this image needs debugfs.
+sed -i '/-t debugfs debugfs/d' /etc/init.d/boot
+if grep -q debugfs /etc/init.d/boot; then echo "debugfs mount still in /etc/init.d/boot"; exit 1; fi
 echo "Droidspaces/VirtualAP OpenWrt image built on $(date)" > /etc/droidspaces
 
 # Trim opkg lists; keep /tmp (resolv.conf symlink + tmpfs at runtime)
