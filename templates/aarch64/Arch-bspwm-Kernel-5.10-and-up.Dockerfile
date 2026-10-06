@@ -153,8 +153,8 @@ ConditionPathExists=/run/droidspaces/container.config
 [Service]
 Type=simple
 User=root
-# bspwm-start waits for the X server itself, so only the Termux:X11 flag is gated here.
-ExecCondition=/bin/sh -c "grep -q 'enable_termux_x11=1' /run/droidspaces/container.config"
+# bspwm-start waits for the X server itself, so only the X11 flag is gated here.
+ExecCondition=/bin/sh -c "grep -qE '^enable_(termux_)?x11=1' /run/droidspaces/container.config"
 ExecStart=/usr/local/bin/bspwm-start
 Restart=always
 RestartSec=3

@@ -324,7 +324,7 @@ depend() {
 }
 
 x11_enabled() {
-    grep -qs 'enable_termux_x11=1' /run/droidspaces/container.config
+    grep -qsE '^enable_(termux_)?x11=1' /run/droidspaces/container.config
 }
 
 start() {
