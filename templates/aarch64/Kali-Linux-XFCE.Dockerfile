@@ -391,11 +391,7 @@ RUN apt-get purge -y qemu-* binfmt-support || true && \
     apt-get update && \
     # Install ONLY these packages (in this specific order)
     apt-get install -y qemu-user-static && \
-    apt-get install -y binfmt-support && \
-    # Add amd64 architecture and install libc6:amd64
-    dpkg --add-architecture amd64 && \
-    apt-get update && \
-    apt-get install -y libc6:amd64
+    apt-get install -y binfmt-support
 
 # Install custom mesa from lfdevs/mesa-for-android-container
 COPY scripts/install-mesa /usr/local/bin/install-mesa
