@@ -21,7 +21,7 @@ FROM base AS customizer
 
 # Initialize pacman keyring and install the full development rootfs.
 # NetworkManager is enabled through a DroidSpaces wrapper below so it only runs
-# for NAT/gateway containers and cannot disturb Android host networking.
+# for containers with their own network and cannot disturb Android host networking.
 # CheckSpace trips on BuildKit's read-only /etc/hosts and /etc/resolv.conf mounts
 RUN sed -i 's/^CheckSpace/#CheckSpace/' /etc/pacman.conf && \
     pacman-key --init && \
@@ -152,7 +152,7 @@ rc-update add agetty.console default
 
 # dhcpcd ships enabled in the default runlevel. It must not start unconditionally
 # (breaks cellular networking in host network mode); NetworkManager handles DHCP
-# in NAT/gateway mode via the gated service below.
+# in modes with their own network via the gated service below.
 rc-update del dhcpcd default
 
 # Let udev actually run under rc_sys="lxc": its script is excluded in every
@@ -195,7 +195,10 @@ start() {
 EOT
 chmod 0755 /etc/init.d/droidspaces-udev-trigger
 
-# Conditional NetworkManager startup for NAT/gateway mode only.
+# NetworkManager only in modes with their own network. In macvlan mode it will not
+# manage a macvlan whose parent is in another namespace, so dhcpcd serves eth0
+# (manager mode follows eth0 across a replug; --nodev because udev never
+# announces a device born in the container's namespace).
 cat > /etc/init.d/droidspaces-network <<'EOT'
 #!/sbin/openrc-run
 
@@ -207,25 +210,37 @@ depend() {
 }
 
 is_managed_mode() {
-    grep -qsE '(^|[[:space:]])net_mode=(nat|gateway)($|[[:space:]])' \
-        /run/droidspaces/container.config
+    grep -qs '^net_mode=' /run/droidspaces/container.config &&
+        ! grep -qsE '^net_mode=(host|none)$' /run/droidspaces/container.config
+}
+
+is_macvlan_mode() {
+    grep -qs '^net_mode=macvlan$' /run/droidspaces/container.config
 }
 
 start() {
     if ! is_managed_mode; then
-        einfo "Host networking detected; leaving Android networking untouched"
+        einfo "Host or none networking; leaving networking untouched"
         return 0
     fi
 
-    ebegin "Starting NetworkManager for DroidSpaces NAT/gateway mode"
+    ebegin "Starting NetworkManager for the container network"
     rc-service NetworkManager start
     # NetworkManager's script exits non-zero while "inactive" (started, not yet
     # online). The daemon is running either way, so don't fail this service on it.
     eend 0
+
+    if is_macvlan_mode && command -v dhcpcd >/dev/null; then
+        ebegin "Starting dhcpcd for the macvlan eth0"
+        # Detached from our stdio, or a caller reading our output waits on it
+        dhcpcd -M -b --nodev -z eth0 </dev/null >/dev/null 2>&1
+        eend $?
+    fi
 }
 
 stop() {
     is_managed_mode || return 0
+    is_macvlan_mode && command -v dhcpcd >/dev/null && dhcpcd -x
     rc-service NetworkManager stop
 }
 EOT

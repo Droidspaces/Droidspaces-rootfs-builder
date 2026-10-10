@@ -224,7 +224,8 @@ for unit in systemd-udevd.service systemd-udev-trigger.service systemd-udev-sett
     printf "[Unit]\nConditionPathIsReadWrite=\n" > "/etc/systemd/system/${unit}.d/99-readonly-fix.conf"
 done
 
-# Limit specific network services to only start in NAT mode
+# Keep network services out of host and none modes; every mode with its own
+# network needs a DHCP client, so list the modes to skip, not the ones to run in
 # Prevents cellular network breakage when running in host network mode
 for unit in NetworkManager.service dhcpcd.service systemd-resolved.service systemd-networkd.service; do
     if [ -f "$GUEST_SYSTEMD_PATH/$unit" ] || [ -f "/etc/systemd/system/multi-user.target.wants/$unit" ]; then
@@ -232,7 +233,7 @@ for unit in NetworkManager.service dhcpcd.service systemd-resolved.service syste
         cat > "/etc/systemd/system/${unit}.d/99-netmode-limit.conf" << 'EOF'
 [Service]
 ExecCondition=
-ExecCondition=/bin/sh -c "grep -qE 'net_mode=(nat|gateway)' /run/droidspaces/container.config"
+ExecCondition=/bin/sh -c "grep -q '^net_mode=' /run/droidspaces/container.config && ! grep -qE '^net_mode=(host|none)$' /run/droidspaces/container.config"
 EOF
     fi
 done

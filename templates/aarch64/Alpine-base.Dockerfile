@@ -115,7 +115,7 @@ ln -sf /etc/init.d/sshd /etc/runlevels/default/sshd
 ln -sf /etc/init.d/containerd /etc/runlevels/default/containerd
 ln -sf /etc/init.d/docker /etc/runlevels/default/docker
 
-# Replace dhcpcd init script to only start in NAT network mode
+# Replace dhcpcd init script to stay out of host and none network modes
 # This is the OpenRC equivalent of systemd's ExecCondition - if the container
 # is running in host network mode, dhcpcd is cleanly skipped at boot to prevent
 # cellular network breakage and kernel panics on Android interfaces.
@@ -125,7 +125,9 @@ cat > /etc/init.d/dhcpcd << 'INITEOF'
 description="DHCP Client Daemon"
 
 command="/sbin/dhcpcd"
-command_args="-q -B ${command_args:-}"
+# --nodev: udev never announces a device born in the container's namespace,
+# and dhcpcd would wait on it forever where udev runs
+command_args="-q -B --nodev ${command_args:-}"
 command_background="true"
 pidfile="/run/dhcpcd/pid"
 
@@ -138,9 +140,10 @@ depend() {
 }
 
 start_pre() {
-	# Only start in NAT mode - prevents cellular network breakage in host network mode
-	if ! grep -qE 'net_mode=(nat|gateway)' /run/droidspaces/container.config 2>/dev/null; then
-		einfo "Skipping dhcpcd: not in NAT network mode"
+	# Not in host mode (cellular breakage) or none mode (no eth0)
+	if ! grep -qs '^net_mode=' /run/droidspaces/container.config ||
+		grep -qsE '^net_mode=(host|none)$' /run/droidspaces/container.config; then
+		einfo "Skipping dhcpcd: host or none network mode"
 		return 1
 	fi
 	checkpath -d /run/dhcpcd

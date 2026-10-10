@@ -152,14 +152,14 @@ do
     printf "[Unit]\nConditionPathIsReadWrite=\n" > "/etc/systemd/system/${unit}.d/99-readonly-fix.conf"
 done
 
-# Limit network daemons to Droidspaces NAT mode.
+# Keep network daemons out of host and none modes.
 for unit in NetworkManager.service dhcpcd.service systemd-resolved.service systemd-networkd.service; do
     if [ -f "$GUEST_SYSTEMD_PATH/$unit" ] || [ -e "/etc/systemd/system/multi-user.target.wants/$unit" ]; then
         mkdir -p "/etc/systemd/system/${unit}.d"
         cat > "/etc/systemd/system/${unit}.d/99-netmode-limit.conf" <<'EOF'
 [Service]
 ExecCondition=
-ExecCondition=/bin/sh -c "grep -qE 'net_mode=(nat|gateway)' /run/droidspaces/container.config"
+ExecCondition=/bin/sh -c "grep -q '^net_mode=' /run/droidspaces/container.config && ! grep -qE '^net_mode=(host|none)$' /run/droidspaces/container.config"
 EOF
     fi
 done
