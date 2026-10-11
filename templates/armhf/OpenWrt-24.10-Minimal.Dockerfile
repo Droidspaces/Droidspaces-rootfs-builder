@@ -56,7 +56,40 @@ config interface 'wan6'
 	option reqaddress 'try'
 	option reqprefix 'auto'
 	option sourcefilter '0'
+
+# Droidspaces gateway mode plugs every client's cable into eth1. This is their
+# router: static v4, plus a /64 out of the ULA below for SLAAC and DHCPv6.
+config interface 'Containers'
+	option device 'eth1'
+	option proto 'static'
+	option ipaddr '192.168.41.1'
+	option netmask '255.255.255.0'
+	option ip6assign '64'
 NETEOF
+
+# The stock 'lan' DHCP section points at an interface this image does not
+# have, so it becomes the Containers one. ra_default 2: with only a ULA and no
+# public prefix odhcpd advertises a router lifetime of 0, clients never get an
+# IPv6 default route, and the NAT66 below is never reached.
+uci batch <<'DHCPEOF'
+rename dhcp.lan=Containers
+set dhcp.Containers.interface='Containers'
+set dhcp.Containers.ra_default='2'
+commit dhcp
+DHCPEOF
+
+cat > /etc/hotplug.d/net/30-droidspaces-claim <<'CLAIMEOF'
+# netifd claims a hot-plugged device on its "add" uevent, which the kernel sends
+# before the name resolves. When netifd gets there first the claim fails with
+# DEVICE_CLAIM_FAILED and is never retried, so a Droidspaces gateway's eth1,
+# plugged in when the first client starts, could stay down for good. procd runs
+# this after that window, so ask netifd once more.
+[ "$ACTION" = add ] || exit 0
+for i in $(ubus call network.interface dump | jsonfilter -e "@.interface[@.device='$INTERFACE' && @.up=false && @.autostart=true].interface"); do
+	logger -t droidspaces "retrying the claim of $INTERFACE for $i"
+	ubus call network.interface."$i" up
+done
+CLAIMEOF
 
 # Upstream hands us one address and no delegated prefix, so LAN interfaces are
 # numbered from our own ULA (option ip6assign on the interface) and NAT66'd out
@@ -99,6 +132,14 @@ config zone
 	option output 'ACCEPT'
 	option forward 'DROP'
 
+# Gateway clients get the internet and DNS/DHCP from the router, nothing else
+config zone
+	option name 'Containers'
+	list network 'Containers'
+	option input 'REJECT'
+	option output 'ACCEPT'
+	option forward 'REJECT'
+
 config zone
 	option name 'wan'
 	list network 'wan'
@@ -117,6 +158,10 @@ config forwarding
 	option src 'guest'
 	option dest 'wan'
 
+config forwarding
+	option src 'Containers'
+	option dest 'wan'
+
 # Guest clients need DHCP + DNS from the router itself (input is REJECT)
 config rule
 	option name 'Allow-DHCP-Guest'
@@ -128,6 +173,22 @@ config rule
 config rule
 	option name 'Allow-DNS-Guest'
 	option src 'guest'
+	option proto 'tcp udp'
+	option dest_port '53'
+	option target 'ACCEPT'
+
+# DHCPv6 and the ICMPv6 that SLAAC needs are covered by the src '*' rules below
+config rule
+	option name 'Allow-DHCP-Containers'
+	option src 'Containers'
+	option proto 'udp'
+	option dest_port '67-68'
+	option family 'ipv4'
+	option target 'ACCEPT'
+
+config rule
+	option name 'Allow-DNS-Containers'
+	option src 'Containers'
 	option proto 'tcp udp'
 	option dest_port '53'
 	option target 'ACCEPT'
@@ -216,6 +277,6 @@ EOF_RUN
 FROM scratch AS export
 LABEL droidspaces.name="OpenWrt 24.10 - Minimal (iptables-legacy)" \
       droidspaces.distro="OpenWrt" \
-      droidspaces.description="Minimal OpenWrt 24.10 router rootfs built for Android kernels: nftables/fw4 stripped out in favor of iptables-legacy + fw3, with full firewall (NAT, zones, masquerade) working. Tuned for VirtualAP's managed-hotspot (container) mode." \
+      droidspaces.description="Minimal OpenWrt 24.10 router rootfs built for Android kernels: nftables/fw4 stripped out in favor of iptables-legacy + fw3, with full firewall (NAT, zones, masquerade) working. Tuned for VirtualAP's managed-hotspot (container) mode, and serves Droidspaces gateway-mode clients on eth1 out of the box." \
       droidspaces.author="Droidspaces developers"
 COPY --from=customizer / /
