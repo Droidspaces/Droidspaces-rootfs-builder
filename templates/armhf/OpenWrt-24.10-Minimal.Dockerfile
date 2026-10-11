@@ -67,13 +67,23 @@ config interface 'Containers'
 	option ip6assign '64'
 NETEOF
 
-# The stock 'lan' DHCP section points at an interface this image does not
-# have, so it becomes the Containers one. ra_default 2: with only a ULA and no
-# public prefix odhcpd advertises a router lifetime of 0, clients never get an
-# IPv6 default route, and the NAT66 below is never reached.
+# Every server option is spelled out: odhcpd's first-boot script only fills
+# them in on a section named 'lan', and recreates that section if it is gone.
+# ra_default 2: with only a ULA and no public prefix odhcpd advertises a router
+# lifetime of 0, clients never get an IPv6 default route, and the NAT66 below
+# is never reached.
 uci batch <<'DHCPEOF'
-rename dhcp.lan=Containers
+set dhcp.Containers=dhcp
 set dhcp.Containers.interface='Containers'
+set dhcp.Containers.start='100'
+set dhcp.Containers.limit='150'
+set dhcp.Containers.leasetime='12h'
+set dhcp.Containers.dhcpv4='server'
+set dhcp.Containers.dhcpv6='server'
+set dhcp.Containers.ra='server'
+set dhcp.Containers.ra_slaac='1'
+add_list dhcp.Containers.ra_flags='managed-config'
+add_list dhcp.Containers.ra_flags='other-config'
 set dhcp.Containers.ra_default='2'
 commit dhcp
 DHCPEOF
