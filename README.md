@@ -67,6 +67,14 @@ as **root** unless you name a desktop user. XFCE templates read `XFCE_USER`; bsp
 read `DESKTOP_USER`. Both come from `/run/droidspaces.env`, which the host app writes at start
 (CLI: pass an env file with `droidspaces --env=PATH`).
 
+`Fedora-44-Mali-KDE` is different: KDE Plasma on the phone's own Mali GPU, shown through
+Anland. It comes with a desktop user, **fedora** with password **1234**, and starts Plasma as
+that user on every container start. Users you add later get the same groups. The tarball
+carries its own `container.config`, so the installer turns on GPU access and binds the
+Android partitions the driver needs. It needs a stock Mali driver, a kernel with the kbase pid
+namespace fix and the Anland app, see
+[Droidspaces-Mali](https://github.com/ravindu644/Droidspaces-Mali).
+
 ### Creating the desktop user
 
 Run these **inside the container**, as root.

@@ -56,6 +56,22 @@ docker buildx build \
   -f "$DOCKERFILE" \
   .
 
+# The app reads a template's /container.config from the first 64 KiB only, and BuildKit
+# writes the tarball in its own order. Rewrite it with the config first. GNU tar's --delete
+# corrupts BuildKit's PAX archives, so copy member by member instead.
+python3 - "$TEMP_TAR" <<'PY'
+import os, sys, tarfile
+src = sys.argv[1]
+with tarfile.open(src) as t:
+    members = t.getmembers()
+    head = [m for m in members if m.name in ("container.config", "./container.config")]
+    if head:
+        with tarfile.open(src + ".new", "w", format=tarfile.PAX_FORMAT) as out:
+            for m in head + [m for m in members if m not in head]:
+                out.addfile(m, t.extractfile(m) if m.isreg() else None)
+        os.replace(src + ".new", src)
+PY
+
 echo "Compressing (xz -T0 -9)..."
 xz -T0 -9 -f "$TEMP_TAR"
 mv "${TEMP_TAR}.xz" "$FINAL_NAME"
