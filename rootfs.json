@@ -6,11 +6,11 @@
     "description": "Alpine Linux v3.23 rootfs with basic packages, development tools, Python, and Docker.",
     "architecture": "aarch64",
     "file": "Alpine-base",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Alpine-base-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "4d34e1f2d6a925baa98b24c3bf317fe2912b42d2e274c012daf5d83ecd98b769",
-    "size_bytes": 235100104,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Alpine-base-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "d0041aca744ffefa78cfec5ee5a1dc38e2a2ab2159aa26320969b779620f45fd",
+    "size_bytes": 235278324,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -19,11 +19,11 @@
     "description": "Minimal Alpine Linux v3.23 rootfs with basic packages.",
     "architecture": "aarch64",
     "file": "Alpine-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Alpine-Minimal-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "f2eb68a98c9118130a0179131d440a19628e7d2e2ce6f4d6ec5e815f8e564a0d",
-    "size_bytes": 10128864,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Alpine-Minimal-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "263da62fa174b1021e111b53f9f16d48186005de1704b322e742841dcdcbb2a4",
+    "size_bytes": 10129428,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -32,11 +32,11 @@
     "description": "Arch Linux rootfs with basic packages, development tools and Docker (Runs on Kernel 5.10 and above only).",
     "architecture": "aarch64",
     "file": "Arch-base-Kernel-5.10-and-up",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Arch-base-Kernel-5.10-and-up-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "181efe2c470d0fd9591bbe0cd9770876c596ea7324668dc797803ea01a392b43",
-    "size_bytes": 360396196,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Arch-base-Kernel-5.10-and-up-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "9d60ef367e15bb442e8d65e0a7eb5af13e793a07bdfcfd52556700e0dbe874dc",
+    "size_bytes": 361148196,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -45,11 +45,11 @@
     "description": "Minimal Arch Linux rootfs with basic packages. (Runs on Kernel 5.10 and above only).",
     "architecture": "aarch64",
     "file": "Arch-Minimal-Kernel-5.10-and-up",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Arch-Minimal-Kernel-5.10-and-up-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "f226bd77bede4bdfe6e70bad7072e965e45c0c09234666976e3819aa91ee1be3",
-    "size_bytes": 109529572,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Arch-Minimal-Kernel-5.10-and-up-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "d4ebc09f5e689648522c45fa4318f877e9c064cf32c0603f5663e80fd59a0e51",
+    "size_bytes": 109653084,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -58,11 +58,11 @@
     "description": "Arch Linux rootfs with the bspwm tiling window manager (touch-friendly Catppuccin desktop). Runs on Kernel 5.10 and above only.",
     "architecture": "aarch64",
     "file": "Arch-bspwm-Kernel-5.10-and-up",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Arch-bspwm-Kernel-5.10-and-up-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "b81db917c37e494fa39da0144093623c50494c576783502ef85a5296b5a5bf98",
-    "size_bytes": 363650172,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Arch-bspwm-Kernel-5.10-and-up-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "021c3218ff001fb3911dbf3ce1b0d28054ed84600a21c45da882277fe725fb99",
+    "size_bytes": 364454316,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -71,11 +71,11 @@
     "description": "Artix Linux (Armtix) rootfs with basic packages, development tools and Docker. Uses OpenRC.",
     "architecture": "aarch64",
     "file": "Artix-Base-OpenRC",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Artix-Base-OpenRC-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "a632cef5abdbc4d6872e954d0f3eccec9a63525ac466c8a8455f9745d5c0e333",
-    "size_bytes": 449904892,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Artix-Base-OpenRC-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "93a4b656e6218895e01865a8a54944fc5282771826310a784c01eed0dadc875d",
+    "size_bytes": 447977364,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -84,11 +84,11 @@
     "description": "Minimal Artix Linux (Armtix) rootfs with basic packages. Uses OpenRC.",
     "architecture": "aarch64",
     "file": "Artix-Minimal-OpenRC",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Artix-Minimal-OpenRC-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "82473bc4b77fa620a1d6f6595ca4e69d1da273a21a757cda1b6fae94233f5d77",
-    "size_bytes": 168740812,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Artix-Minimal-OpenRC-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "859d9111511f6ffa1cc37300ce83b95a51ec09b6bd5358f5c0fb4d22f27159d7",
+    "size_bytes": 167295772,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -97,11 +97,11 @@
     "description": "Artix Linux (Armtix) rootfs with the bspwm tiling window manager (touch-friendly Catppuccin desktop). Uses OpenRC.",
     "architecture": "aarch64",
     "file": "Artix-bspwm-OpenRC",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Artix-bspwm-OpenRC-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "624b3c557b80813e83e578e3e1b419d23744cfd0e486cd8e3c802096bc940ef9",
-    "size_bytes": 452054880,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Artix-bspwm-OpenRC-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "8966bd5e5e09fc3d3fe002ddbdb41a738db40bde308987cf16f2be27961da244",
+    "size_bytes": 451621940,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -110,11 +110,11 @@
     "description": "Azure Linux 3.0 rootfs with basic packages.",
     "architecture": "aarch64",
     "file": "AzureLinux-3.0-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/AzureLinux-3.0-Minimal-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "fab154a643aa323485836c1726993fed0649cc6466e17126d7aff317956d4195",
-    "size_bytes": 86989968,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/AzureLinux-3.0-Minimal-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "f7d7964d83cdae38cdafb9fada5b47d3b391690b051b15d46c30f79c63620cc1",
+    "size_bytes": 87016208,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -123,11 +123,11 @@
     "description": "Debian 13 rootfs with basic packages, development tools, Docker, XFCE desktop environment.",
     "architecture": "aarch64",
     "file": "Debian-13-XFCE",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Debian-13-XFCE-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "b86def2733418af6260801331caf694eab38509a2315c184f5fd6bf692a80825",
-    "size_bytes": 640246840,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Debian-13-XFCE-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "5c66f3ded878882191e82bdd8cb3f272df290ff551d2e32ab672ebd7784d6adb",
+    "size_bytes": 637098164,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -136,11 +136,11 @@
     "description": "Debian 13 rootfs with basic packages, development tools, and Docker.",
     "architecture": "aarch64",
     "file": "Debian-13-base",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Debian-13-base-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "f47da4cf7d0966bd508dedd6b2db43bfbd138c9c58d4c1785620cd9ca62172c3",
-    "size_bytes": 347336088,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Debian-13-base-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "b862a52b6b3e236f191045bd4c505bcf7dd435f819ff2001cfa956bbedb94673",
+    "size_bytes": 344472736,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -149,11 +149,11 @@
     "description": "Minimal Debian 13 rootfs with basic packages.",
     "architecture": "aarch64",
     "file": "Debian-13-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Debian-13-Minimal-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "1649eba2720fc72b893707d7a3503e0dafb6d86a61c3eaf644a825bd81d20281",
-    "size_bytes": 101370344,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Debian-13-Minimal-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "a4da301ea796509701b15de96cacc6488141ba2e6392a5a736fbff0bd92ebca0",
+    "size_bytes": 98682200,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -162,11 +162,11 @@
     "description": "Minimal Kali Linux rootfs with basic packages.",
     "architecture": "aarch64",
     "file": "Kali-Linux-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Kali-Linux-Minimal-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "1d8e39f8a2e66f4aa5fc41298569d6cc918e3eaed438ada705c2a6751bfc7e91",
-    "size_bytes": 119008820,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Kali-Linux-Minimal-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "3ebf70553c0ebbcf2c522e425e4ec764e271165bd0cefe93670a4ba5b554fae9",
+    "size_bytes": 115897460,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -175,11 +175,11 @@
     "description": "Kali Linux rootfs with basic packages, development tools, Docker, and XFCE desktop environment.",
     "architecture": "aarch64",
     "file": "Kali-Linux-XFCE",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Kali-Linux-XFCE-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "967b07402deb7a2adcb270ba888843975a035ac12288a3fc47ae32f0a059ac76",
-    "size_bytes": 820693948,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Kali-Linux-XFCE-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "9c5f472fd5099f1a3c59b3e9a28a4c08527c58e2a628c0a9252650f26aba2c19",
+    "size_bytes": 813086920,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -188,11 +188,11 @@
     "description": "Minimal OpenWrt 24.10 router rootfs built for Android kernels: nftables/fw4 stripped out in favor of iptables-legacy + fw3, with full firewall (NAT, zones, masquerade) working. Tuned for VirtualAP's managed-hotspot (container) mode, and serves Droidspaces gateway-mode clients on eth1 out of the box.",
     "architecture": "aarch64",
     "file": "OpenWrt-24.10-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/OpenWrt-24.10-Minimal-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "f551b94c6a09af8d127e56f7b43a29bbafba30af67f0b3fa00d964a12ce16941",
-    "size_bytes": 3000092,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/OpenWrt-24.10-Minimal-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "464ed9816c5da2ffa2e643194eb3e6eb111b4dffab003bcf87e8a276ba707aef",
+    "size_bytes": 3002212,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -201,11 +201,11 @@
     "description": "Minimal OpenWrt 24.10 router rootfs built for Android kernels: nftables/fw4 stripped out in favor of iptables-legacy + fw3, with full firewall (NAT, zones, masquerade) working. Tuned for VirtualAP's managed-hotspot (container) mode, and serves Droidspaces gateway-mode clients on eth1 out of the box.",
     "architecture": "armhf",
     "file": "OpenWrt-24.10-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/OpenWrt-24.10-Minimal-Droidspaces-rootfs-armhf-20261011-v20261011-103113.tar.xz",
-    "sha256": "ac7782dc693259769e064409bc7f7e398859d17c5b266a18cfd7b5b1c3f5d93a",
-    "size_bytes": 2742772,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/OpenWrt-24.10-Minimal-Droidspaces-rootfs-armhf-20261015-v20261015-141601.tar.xz",
+    "sha256": "0ae94eab9337d65bf9dcb372b5becd84c17b018617b27685b734b2e5eb186caf",
+    "size_bytes": 2740140,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -214,11 +214,11 @@
     "description": "Ubuntu 22.04 rootfs with basic packages, development tools, and Docker.",
     "architecture": "aarch64",
     "file": "Ubuntu-22.04-base",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Ubuntu-22.04-base-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "7cca2aea28a2b02bbd6d313bb75d13bbeaa3380a7780503ac1601a0c13d6d656",
-    "size_bytes": 279388024,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Ubuntu-22.04-base-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "08e147ea114082de95e72918d829b6fcf16ec8b8d363a61588fd991ff3d73bb5",
+    "size_bytes": 272915828,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -227,11 +227,11 @@
     "description": "Minimal Ubuntu 22.04 rootfs with basic packages..",
     "architecture": "aarch64",
     "file": "Ubuntu-22.04-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Ubuntu-22.04-Minimal-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "4f4ed579e4199c5b71f08abbd77c22bea6b8933d289d8efd2b095bc70cb7ce12",
-    "size_bytes": 70735792,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Ubuntu-22.04-Minimal-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "999d72e6343cbaa66f2657a82aae5b1ffac08a22ac8a83f6e76e20ba8c652410",
+    "size_bytes": 65363812,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -240,11 +240,11 @@
     "description": "Ubuntu 24.04 rootfs with basic packages, development tools, and Docker.",
     "architecture": "aarch64",
     "file": "Ubuntu-24.04-base",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Ubuntu-24.04-base-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "c3bcc51f5a456e40f86c23f44964051dd1b3d9b592ba5ead65b0714f54f287da",
-    "size_bytes": 303085672,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Ubuntu-24.04-base-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "85984f30e2517240dfde2b8bc3b51b7d93d67f4fa0044e1a5e580ac19c95b448",
+    "size_bytes": 299541528,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -253,11 +253,11 @@
     "description": "Minimal Ubuntu 24.04 rootfs with basic packages.",
     "architecture": "aarch64",
     "file": "Ubuntu-24.04-Minimal",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Ubuntu-24.04-Minimal-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "4b88329e68c39eb2be9a6cc9195daef863180256cd9b774325cc429a52363e6f",
-    "size_bytes": 74059180,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Ubuntu-24.04-Minimal-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "2f27a4c069f86c8c8c209dc4ed1edc88a0d28f45108f6476564570456288d575",
+    "size_bytes": 70894524,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -266,11 +266,11 @@
     "description": "Ubuntu 24.04 rootfs with basic packages, development tools, Docker and XFCE desktop environment.",
     "architecture": "aarch64",
     "file": "Ubuntu-24.04-XFCE",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Ubuntu-24.04-XFCE-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "0a56dc6811741e8ec5773530ab71ca66217c0d4d67a4f74678776eb3e4c2af2e",
-    "size_bytes": 567431284,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Ubuntu-24.04-XFCE-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "864acb00aa6df8f80516e557a2bd185dee730f95a4ee918ddf0f037de1080fbc",
+    "size_bytes": 564289736,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   },
   {
     "author": "Droidspaces developers",
@@ -279,10 +279,10 @@
     "description": "Ubuntu 24.04 rootfs with basic packages and the bspwm tiling window manager (touch-friendly Catppuccin desktop).",
     "architecture": "aarch64",
     "file": "Ubuntu-24.04-bspwm",
-    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261011-103113/Ubuntu-24.04-bspwm-Droidspaces-rootfs-aarch64-20261011-v20261011-103113.tar.xz",
-    "sha256": "388cb9bc49aed891e025c271d7d9bbe2a23c6f7f2fcd2b0ea33ec2d854233c72",
-    "size_bytes": 389828400,
-    "version": "v20261011-103113",
-    "build_date": "20261011"
+    "download_url": "https://github.com/Droidspaces/Droidspaces-rootfs-builder/releases/download/v20261015-141601/Ubuntu-24.04-bspwm-Droidspaces-rootfs-aarch64-20261015-v20261015-141601.tar.xz",
+    "sha256": "820dfe9a5ff1b5092e51b3bef85eb85cf66c867d35df66480e7b1c339d7559ed",
+    "size_bytes": 386422360,
+    "version": "v20261015-141601",
+    "build_date": "20261015"
   }
 ]
