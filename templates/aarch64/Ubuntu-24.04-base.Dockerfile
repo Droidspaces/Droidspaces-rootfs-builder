@@ -277,19 +277,7 @@ RUN apt-get purge -y qemu-* binfmt-support || true && \
     apt-get update && \
     # Install ONLY these packages (in this specific order)
     apt-get install -y qemu-user-static && \
-    apt-get install -y binfmt-support && \
-    # Add amd64 architecture and install libc6:amd64
-    dpkg --add-architecture amd64 && \
-    sed -i '/^Types: deb$/a Architectures: arm64 armhf' /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Types: deb" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "URIs: http://archive.ubuntu.com/ubuntu/" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Suites: noble noble-updates noble-security" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Components: main universe restricted multiverse" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Architectures: amd64" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    echo "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg" >> /etc/apt/sources.list.d/ubuntu.sources && \
-    apt-get update && \
-    apt-get install -y libc6:amd64
+    apt-get install -y binfmt-support
 
 # Final cleanup of APT cache
 RUN apt-get clean && \
