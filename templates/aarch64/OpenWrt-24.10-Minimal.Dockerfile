@@ -34,7 +34,8 @@ opkg install shadow-utils
 usermod -a -G aid_inet,aid_net_raw root || true
 opkg remove --force-depends shadow-utils
 
-# Upstream over eth0 (Droidspaces NAT); VirtualAP adds vaplan0 LAN at start time
+# Upstream over eth0 (Droidspaces NAT); VirtualAP adds vaplan0 LAN at start time,
+# USB Arsenal's gateway mode hands the cable to the container as usb0
 cat > /etc/config/network <<'NETEOF'
 config interface 'loopback'
 	option device 'lo'
@@ -65,6 +66,15 @@ config interface 'Containers'
 	option ipaddr '192.168.41.1'
 	option netmask '255.255.255.0'
 	option ip6assign '64'
+
+# USB Arsenal's gateway mode (tether --gateway) plugs the USB cable in as usb0.
+# Same shape as Containers: static v4 and a /64 out of the ULA.
+config interface 'usb'
+	option device 'usb0'
+	option proto 'static'
+	option ipaddr '192.168.43.1'
+	option netmask '255.255.255.0'
+	option ip6assign '64'
 NETEOF
 
 # Every server option is spelled out: odhcpd's first-boot script only fills
@@ -85,6 +95,18 @@ set dhcp.Containers.ra_slaac='1'
 add_list dhcp.Containers.ra_flags='managed-config'
 add_list dhcp.Containers.ra_flags='other-config'
 set dhcp.Containers.ra_default='2'
+set dhcp.usb=dhcp
+set dhcp.usb.interface='usb'
+set dhcp.usb.start='100'
+set dhcp.usb.limit='150'
+set dhcp.usb.leasetime='12h'
+set dhcp.usb.dhcpv4='server'
+set dhcp.usb.dhcpv6='server'
+set dhcp.usb.ra='server'
+set dhcp.usb.ra_slaac='1'
+add_list dhcp.usb.ra_flags='managed-config'
+add_list dhcp.usb.ra_flags='other-config'
+set dhcp.usb.ra_default='2'
 commit dhcp
 DHCPEOF
 
@@ -118,9 +140,9 @@ ip6tables -t nat -C POSTROUTING -o eth0 -j MASQUERADE 2>/dev/null ||
 	ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 NAT6EOF
 
-# fw3 zones: vaplan lives in an isolated 'guest' zone (NOT lan) so hotspot
-# clients reach only the internet (guest -> masqueraded wan/eth0) and never
-# other containers on lan. input REJECT blocks router services by default; we
+# fw3 zones: vaplan and usb live in an isolated 'guest' zone (NOT lan) so
+# hotspot and USB clients reach only the internet (guest -> masqueraded
+# wan/eth0) and never other containers on lan. input REJECT blocks router services by default; we
 # punch holes below for DHCP + DNS (needed for a lease) and LuCI (admin UI).
 cat > /etc/config/firewall <<'FWEOF'
 config defaults
@@ -138,6 +160,7 @@ config zone
 config zone
 	option name 'guest'
 	list network 'vaplan'
+	list network 'usb'
 	option input 'REJECT'
 	option output 'ACCEPT'
 	option forward 'DROP'
@@ -287,6 +310,6 @@ EOF_RUN
 FROM scratch AS export
 LABEL droidspaces.name="OpenWrt 24.10 - Minimal (iptables-legacy)" \
       droidspaces.distro="OpenWrt" \
-      droidspaces.description="Minimal OpenWrt 24.10 router rootfs built for Android kernels: nftables/fw4 stripped out in favor of iptables-legacy + fw3, with full firewall (NAT, zones, masquerade) working. Tuned for VirtualAP's managed-hotspot (container) mode, and serves Droidspaces gateway-mode clients on eth1 out of the box." \
+      droidspaces.description="Minimal OpenWrt 24.10 router rootfs built for Android kernels: nftables/fw4 stripped out in favor of iptables-legacy + fw3, with full firewall (NAT, zones, masquerade) working. Tuned for VirtualAP's managed-hotspot (container) mode, and serves Droidspaces gateway-mode clients on eth1 and USB Arsenal's gateway mode on usb0 out of the box." \
       droidspaces.author="Droidspaces developers"
 COPY --from=customizer / /
