@@ -3,7 +3,6 @@
 set -e
 
 REPO="lfdevs/mesa-for-android-container"
-API_URL="https://api.github.com/repos/${REPO}/releases/latest"
 
 # Must run as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -67,33 +66,19 @@ else
     apt-get install -y --no-install-recommends python3 $MESA_PACKAGES
 fi
 
-echo "Fetching latest release info from ${REPO}..."
-
-# Fetch and parse the download URL using python3
-DOWNLOAD_URL=$(python3 - <<EOF
-import urllib.request, json, sys
-
-try:
-    with urllib.request.urlopen("${API_URL}") as r:
-        data = json.load(r)
-except Exception as e:
-    print(f"Error fetching release info: {e}", file=sys.stderr)
-    sys.exit(1)
-
-tag = data.get("tag_name", "unknown")
-print(f"Latest release: {tag}", file=sys.stderr)
-
-pattern = "${DISTRO_TAG}_${ARCH_TAG}"
-for asset in data.get("assets", []):
-    name = asset.get("name", "")
-    if pattern in name and name.endswith((".tar.gz", ".tar")):
-        print(asset["browser_download_url"])
-        sys.exit(0)
-
-print(f"Error: No asset found matching '{pattern}'", file=sys.stderr)
-sys.exit(1)
-EOF
-)
+# No GitHub API here: unauthenticated calls to it share one rate limit per IP,
+# and GitHub-hosted runners burn through it, so CI died with "403 rate limit
+# exceeded". The releases/latest redirect and the download URL need no API.
+# Assets are named mesa-for-android-container_<version>_<distro>_<arch>, where
+# <version> is the tag without its "mesa-" prefix; Arch's is a plain .tar.
+echo "Resolving the latest release of ${REPO}..."
+TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/${REPO}/releases/latest")
+TAG=${TAG##*/}
+[ -n "$TAG" ] || { echo "Error: could not resolve the latest release"; exit 1; }
+echo "Latest release: ${TAG}"
+EXT=.tar.gz
+[ "$DISTRO_TAG" = archlinux ] && EXT=.tar
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/mesa-for-android-container_${TAG#mesa-}_${DISTRO_TAG}_${ARCH_TAG}${EXT}"
 
 FILENAME=$(basename "$DOWNLOAD_URL")
 echo "Found: ${FILENAME}"
