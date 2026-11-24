@@ -15,10 +15,11 @@
 FROM alpine:latest AS bootstrap
 RUN apk add --no-cache curl xz
 WORKDIR /rootfs
-RUN curl -fsSL https://armtixlinux.org/images/armtix-openrc-20260921.tar.xz | xz -d | tar x && \
+COPY scripts/fetch-armtix /usr/local/bin/fetch-armtix
+RUN fetch-armtix && \
     ln -sf usr/bin bin && \
     ln -sf usr/lib lib && \
-    ln -sf usr/lib64 lib64 2>/dev/null || true && \
+    { ln -sf usr/lib64 lib64 2>/dev/null || true; } && \
     ln -sf usr/sbin sbin
 
 FROM scratch AS base

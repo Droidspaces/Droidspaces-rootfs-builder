@@ -1,0 +1,29 @@
+#!/bin/sh
+# Unpacks the newest Armtix OpenRC rootfs into the current directory.
+set -eu
+
+# Armtix's own mirrors, in the order its pacman mirrorlist uses. The primary (last)
+# has gone down for weeks at a time, so never depend on a single one.
+for base in \
+    https://armtix.artixlinux.org/images \
+    https://repo.xdan.eu/image/linux/armtix \
+    https://armtixlinux.org/images
+do
+    # sha256sums lists the current images, so it both names the newest and verifies it
+    sum=$(curl -fsSL --retry 3 --connect-timeout 20 "$base/sha256sums" |
+        grep -E '^[0-9a-f]{64} [ *]armtix-openrc-[0-9]{8}\.tar\.xz$' | sort -k2 | tail -n1)
+    [ -n "$sum" ] || { echo "fetch-armtix: no image at $base" >&2; continue; }
+    file=${sum##*[ *]}
+
+    echo "fetch-armtix: $base/$file"
+    if curl -fsSL --retry 3 --connect-timeout 20 -o "/tmp/$file" "$base/$file" &&
+        (cd /tmp && echo "$sum" | sha256sum -c -); then
+        xz -dc "/tmp/$file" | tar x
+        rm "/tmp/$file"
+        exit 0
+    fi
+    rm -f "/tmp/$file"
+done
+
+echo "fetch-armtix: every mirror failed" >&2
+exit 1
