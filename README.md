@@ -56,8 +56,8 @@ python3 scripts/generate_rootfs_json.py --lint
 
 `.github/workflows/build-rootfs-releases.yml` runs on push to `main`, weekly, or by hand.
 It lints labels, builds every template in parallel on the runner for its arch, creates one
-release with all tarballs, then regenerates and commits `rootfs.json`. Any failed build
-blocks the release. The manual "update_json_only" input regenerates `rootfs.json` from the
+release with all tarballs, then regenerates and commits `rootfs.json`. The first failed
+build cancels the rest and blocks the release. The manual "update_json_only" input regenerates `rootfs.json` from the
 current latest release without building.
 
 ## Desktop templates and the desktop user
@@ -78,7 +78,7 @@ adduser alice                     # home, groups and password in one step
 usermod -aG sudo alice            # optional: sudo
 ```
 
-Arch / Artix - `useradd` creates nothing by default, so pass all of it:
+Arch - `useradd` creates nothing by default, so pass all of it:
 
 ```sh
 useradd -m -G wheel,aid_inet,aid_net_raw,input,video,tty alice
@@ -104,8 +104,7 @@ DESKTOP_USER=alice                # bspwm templates
 XFCE_USER=alice                   # XFCE templates
 ```
 
-The bspwm templates (`Ubuntu-24.04-bspwm`, `Arch-bspwm-Kernel-5.10-and-up`,
-`Artix-bspwm-OpenRC`) are XFCE's package
+The bspwm templates (`Ubuntu-24.04-bspwm`, `Arch-bspwm-Kernel-5.10-and-up`) are XFCE's package
 set with the desktop swapped for the bspwm tiling WM plus a touch-friendly Catppuccin theme
 (polybar bar + dock, rofi menus, PulseAudio Volume Control, dynamic desktops, drag-to-resize,
 a settings hub). The theme lives in
@@ -116,7 +115,4 @@ read-only master at `/usr/share/droidspaces/bspwm-theme`, a build-time copy into
 
 The theme itself is init- and distro-agnostic: it picks `pacman` or `apt`, reads the top-bar
 logo from `os-release`, bundles its own fonts, and uses `poweroff`/`reboot` where there is no
-`systemctl`. Only the autostart glue differs per template - a systemd unit on Ubuntu/Arch, an
-OpenRC service driving `supervise-daemon` on Artix. Two packages have no Armtix equivalent, so
-`Artix-bspwm-OpenRC` ships without the tap-the-clock calendar (`gsimplecal`) and without the
-alternate cursor themes (`xcursor-themes`); the default Adwaita cursor is present.
+`systemctl`. The templates autostart it with a systemd unit.
